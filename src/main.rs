@@ -3,23 +3,19 @@ use std::collections::HashMap;
 use bevy::prelude::*;
 use lazy_static::lazy_static;
 
-#[derive(Component)]
-struct AnimationIndices {
-    first: usize,
-    last: usize,
-}
+const DEBUG_ANIMATION: usize = 13;
 
 #[derive(Component, Deref, DerefMut)]
 struct AnimationTimer(Timer);
 
 #[derive(Component)]
 struct CurrentAnimation {
-    // TODO: rename to current animation index
     current_animation: usize,
     current_animation_idx: usize,
     animation_indeces: Vec<usize>,
 }
 
+// TODO: move to seperate file
 lazy_static! {
     static ref CAT_MAP: HashMap<usize, Vec<usize>> = vec![
         (0, vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]),
@@ -42,17 +38,18 @@ lazy_static! {
         (8, vec![96, 97, 98, 99, 104, 105, 106, 107]),
         (9, vec![112, 113, 114, 115, 120, 121, 122, 123]),
         (10, vec![128, 129, 130, 131]), // shifted back 1
+        // TODO: check next animations for off by one errors
         (
             11,
             vec![137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152]
         ),
-        (12, vec![153, 154, 155, 156, 161, 162, 163, 164]),
+        (12, vec![152, 153, 154, 155, 160, 161, 162, 163]),
         (
-            14,
+            13,
             vec![
-                169, 170, 171, 172, 177, 178, 179, 180, 185, 186, 187, 188, 193, 194, 195, 196,
-                201, 202, 203, 204, 209, 210, 211, 212, 219, 220, 221, 222, 226, 227, 228, 229,
-                234, 235, 236, 237, 242, 243, 244, 245, 250, 251, 252, 253, 258, 259, 260, 261
+                168, 169, 170, 171, 176, 177, 178, 179, 184, 185, 186, 187, 192, 193, 194, 195,
+                200, 201, 202, 203, 208, 209, 210, 211, 216, 217, 218, 219, 224, 225, 226, 227,
+                232, 233, 234, 235, 240, 241, 242, 243, 248, 249, 250, 251, 256, 257, 258, 259,
             ]
         ),
     ]
@@ -65,7 +62,7 @@ fn animation_test(
     mut query: Query<(&mut CurrentAnimation, &mut TextureAtlasSprite)>,
 ) {
     if keys.just_pressed(KeyCode::A) {
-        for (mut current_animation, mut sprite) in &mut query {
+        for (mut current_animation, _) in &mut query {
             current_animation.current_animation =
                 if current_animation.current_animation >= CAT_MAP.len() {
                     0
@@ -74,6 +71,7 @@ fn animation_test(
                 };
 
             println!("Current Animation: {}", current_animation.current_animation);
+            // TODO: look for better way than cloning
             let indeces = CAT_MAP
                 .get(&current_animation.current_animation)
                 .unwrap()
@@ -83,6 +81,7 @@ fn animation_test(
             current_animation.current_animation_idx = 0;
         }
     } else if keys.just_pressed(KeyCode::S) {
+        // for debuging animations manually advances the current animation
         println!("Advancing Sprite Animation");
         for (mut animation, mut sprite) in &mut query {
             animation.current_animation_idx =
@@ -104,12 +103,12 @@ fn animation_test(
                 .unwrap()
                 .clone();
 
-            if animation.current_animation == 9 {
+            if animation.current_animation == DEBUG_ANIMATION {
                 println!("Actuall Sprite Index: {}", index);
             }
 
             sprite.index = index;
-        } 
+        }
     }
 }
 
@@ -121,6 +120,7 @@ fn animate_cat(
         &mut CurrentAnimation,
     )>,
 ) {
+    return;
     for (mut timer, mut sprite, mut animation) in &mut query {
         timer.tick(time.delta());
         if timer.just_finished() {
@@ -130,7 +130,7 @@ fn animate_cat(
                 } else {
                     animation.current_animation_idx + 1
                 };
-            if animation.current_animation == 9 {
+            if animation.current_animation == DEBUG_ANIMATION {
                 println!(
                     "Animation Indeces Index: {}",
                     animation.current_animation_idx
@@ -143,7 +143,7 @@ fn animate_cat(
                 .unwrap()
                 .clone();
 
-            if animation.current_animation == 9 {
+            if animation.current_animation == DEBUG_ANIMATION {
                 println!("Actuall Sprite Index: {}", index);
             }
 
@@ -173,9 +173,9 @@ fn setup(
         },
         AnimationTimer(Timer::from_seconds(0.2, TimerMode::Repeating)),
         CurrentAnimation {
-            current_animation: 9,
+            current_animation: DEBUG_ANIMATION,
             current_animation_idx: 0,
-            animation_indeces: CAT_MAP.get(&9).unwrap().clone(),
+            animation_indeces: CAT_MAP.get(&DEBUG_ANIMATION).unwrap().clone(),
         },
     ));
 }
