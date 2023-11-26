@@ -1,44 +1,182 @@
-use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
+use std::collections::HashMap;
+
+use bevy::prelude::*;
+use lazy_static::lazy_static;
 
 #[derive(Component)]
-struct AnimationIndeces  {
+struct AnimationIndices {
     first: usize,
     last: usize,
 }
 
+#[derive(Component, Deref, DerefMut)]
+struct AnimationTimer(Timer);
+
+#[derive(Component)]
+struct CurrentAnimation {
+    // TODO: rename to current animation index
+    current_animation: usize,
+    current_animation_idx: usize,
+    animation_indeces: Vec<usize>,
+}
+
+lazy_static! {
+    static ref CAT_MAP: HashMap<usize, Vec<usize>> = vec![
+        (0, vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]),
+        (
+            1,
+            vec![16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 31]
+        ),
+        (
+            2,
+            vec![32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47]
+        ),
+        (3, vec![48, 49, 50, 51]),
+        (4, vec![56, 57]),
+        (5, vec![64, 65, 66]),
+        (6, vec![72, 73, 74, 75]),
+        (
+            7,
+            vec![80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95]
+        ),
+        (8, vec![96, 97, 98, 99, 104, 105, 106, 107]),
+        (9, vec![112, 113, 114, 115, 120, 121, 122, 123]),
+        (10, vec![128, 129, 130, 131]), // shifted back 1
+        (
+            11,
+            vec![137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152]
+        ),
+        (12, vec![153, 154, 155, 156, 161, 162, 163, 164]),
+        (
+            14,
+            vec![
+                169, 170, 171, 172, 177, 178, 179, 180, 185, 186, 187, 188, 193, 194, 195, 196,
+                201, 202, 203, 204, 209, 210, 211, 212, 219, 220, 221, 222, 226, 227, 228, 229,
+                234, 235, 236, 237, 242, 243, 244, 245, 250, 251, 252, 253, 258, 259, 260, 261
+            ]
+        ),
+    ]
+    .into_iter()
+    .collect();
+}
+
+fn animation_test(
+    keys: Res<Input<KeyCode>>,
+    mut query: Query<(&mut CurrentAnimation, &mut TextureAtlasSprite)>,
+) {
+    if keys.just_pressed(KeyCode::A) {
+        for (mut current_animation, mut sprite) in &mut query {
+            current_animation.current_animation =
+                if current_animation.current_animation >= CAT_MAP.len() {
+                    0
+                } else {
+                    current_animation.current_animation + 1
+                };
+
+            println!("Current Animation: {}", current_animation.current_animation);
+            let indeces = CAT_MAP
+                .get(&current_animation.current_animation)
+                .unwrap()
+                .clone();
+
+            current_animation.animation_indeces = indeces;
+            current_animation.current_animation_idx = 0;
+        }
+    } else if keys.just_pressed(KeyCode::S) {
+        println!("Advancing Sprite Animation");
+        for (mut animation, mut sprite) in &mut query {
+            animation.current_animation_idx =
+                if animation.animation_indeces.len() - 1 == animation.current_animation_idx {
+                    0
+                } else {
+                    animation.current_animation_idx + 1
+                };
+            if animation.current_animation == 9 {
+                println!(
+                    "Animation Indeces Index: {}",
+                    animation.current_animation_idx
+                );
+            }
+
+            let index = animation
+                .animation_indeces
+                .get(animation.current_animation_idx)
+                .unwrap()
+                .clone();
+
+            if animation.current_animation == 9 {
+                println!("Actuall Sprite Index: {}", index);
+            }
+
+            sprite.index = index;
+        } 
+    }
+}
+
+fn animate_cat(
+    time: Res<Time>,
+    mut query: Query<(
+        &mut AnimationTimer,
+        &mut TextureAtlasSprite,
+        &mut CurrentAnimation,
+    )>,
+) {
+    for (mut timer, mut sprite, mut animation) in &mut query {
+        timer.tick(time.delta());
+        if timer.just_finished() {
+            animation.current_animation_idx =
+                if animation.animation_indeces.len() - 1 == animation.current_animation_idx {
+                    0
+                } else {
+                    animation.current_animation_idx + 1
+                };
+            if animation.current_animation == 9 {
+                println!(
+                    "Animation Indeces Index: {}",
+                    animation.current_animation_idx
+                );
+            }
+
+            let index = animation
+                .animation_indeces
+                .get(animation.current_animation_idx)
+                .unwrap()
+                .clone();
+
+            if animation.current_animation == 9 {
+                println!("Actuall Sprite Index: {}", index);
+            }
+
+            sprite.index = index;
+        }
+    }
+}
+
 fn setup(
     mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
     asset_server: Res<AssetServer>,
-    mut texture_atlases: ResMut<Assets<TextureAtlas>>
+    mut texture_atlases: ResMut<Assets<TextureAtlas>>,
 ) {
-    /*
-    commands.spawn(MaterialMesh2dBundle {
-        mesh: meshes.add(shape::Circle::new(50.).into()).into(),
-        material: materials.add(ColorMaterial::from(Color::PURPLE)),
-        transform: Transform::from_translation(Vec3::new(-150., 0., 0.)),
-        ..default()
-    });
-    */
-    
     // load sprite sheet
     let texture_handle = asset_server.load("../assets/Cat-Sheet.png");
-    let texture_atlas = TextureAtlas::from_grid(
-        texture_handle, Vec2::new(24.0, 24.0), 8, 6, None, None, 
-    );
+    // create texture atlas
+    let texture_atlas =
+        TextureAtlas::from_grid(texture_handle, Vec2::new(32.0, 32.0), 8, 51, None, None);
     let texture_atlas_handle = texture_atlases.add(texture_atlas);
-    let animation_indices = AnimationIndeces { first: 1, last: 47 };
 
-    
     commands.spawn((
         SpriteSheetBundle {
             texture_atlas: texture_atlas_handle,
-            sprite: TextureAtlasSprite::new(animation_indices.first),
+            sprite: TextureAtlasSprite::new(0),
             transform: Transform::from_scale(Vec3::splat(6.0)),
             ..default()
-        }, 
-        animation_indices,
+        },
+        AnimationTimer(Timer::from_seconds(0.2, TimerMode::Repeating)),
+        CurrentAnimation {
+            current_animation: 9,
+            current_animation_idx: 0,
+            animation_indeces: CAT_MAP.get(&9).unwrap().clone(),
+        },
     ));
 }
 
@@ -48,8 +186,12 @@ fn camera_setup(mut commands: Commands) {
 
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins)
+        // default_nearest to prevent blury sprites
+        .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
         .add_systems(Startup, (camera_setup, setup))
-        .add_systems(Update, bevy::window::close_on_esc)
+        .add_systems(
+            Update,
+            (animation_test, animate_cat, bevy::window::close_on_esc),
+        )
         .run();
 }
