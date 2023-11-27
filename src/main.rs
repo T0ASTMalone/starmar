@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use bevy::prelude::*;
 use lazy_static::lazy_static;
 
-const DEBUG_ANIMATION: usize = 13;
+const DEBUG_ANIMATION: usize = 21;
 
 #[derive(Component, Deref, DerefMut)]
 struct AnimationTimer(Timer);
@@ -38,7 +38,6 @@ lazy_static! {
         (8, vec![96, 97, 98, 99, 104, 105, 106, 107]),
         (9, vec![112, 113, 114, 115, 120, 121, 122, 123]),
         (10, vec![128, 129, 130, 131]), // shifted back 1
-        // TODO: check next animations for off by one errors
         (
             11,
             vec![137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152]
@@ -52,6 +51,15 @@ lazy_static! {
                 232, 233, 234, 235, 240, 241, 242, 243, 248, 249, 250, 251, 256, 257, 258, 259,
             ]
         ),
+        (14, vec![264, 265]),
+        (15, vec![272, 273, 274, 275, 276, 277, 278, 279]),
+        (16, vec![280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291]),
+        (17, vec![296, 297, 298, 299, 300, 301, 302, 303]),
+        (18, vec![304, 305, 306, 307, 312, 313, 314, 315]),
+        (19, vec![320, 321, 322, 323, 328, 329, 330, 331]),
+        (20, vec![336, 337, 338, 339]),
+        (21, vec![344, 345, 346, 347, 352, 353, 354, 355, 360, 361, 362, 363]) // poop
+
     ]
     .into_iter()
     .collect();
@@ -90,7 +98,7 @@ fn animation_test(
                 } else {
                     animation.current_animation_idx + 1
                 };
-            if animation.current_animation == 9 {
+            if animation.current_animation == DEBUG_ANIMATION {
                 println!(
                     "Animation Indeces Index: {}",
                     animation.current_animation_idx
@@ -164,10 +172,12 @@ fn setup(
         TextureAtlas::from_grid(texture_handle, Vec2::new(32.0, 32.0), 8, 51, None, None);
     let texture_atlas_handle = texture_atlases.add(texture_atlas);
 
+    let initial_indices = CAT_MAP.get(&DEBUG_ANIMATION).unwrap().clone();
+
     commands.spawn((
         SpriteSheetBundle {
             texture_atlas: texture_atlas_handle,
-            sprite: TextureAtlasSprite::new(0),
+            sprite: TextureAtlasSprite::new(initial_indices.get(0).unwrap().clone()),
             transform: Transform::from_scale(Vec3::splat(6.0)),
             ..default()
         },
@@ -175,7 +185,7 @@ fn setup(
         CurrentAnimation {
             current_animation: DEBUG_ANIMATION,
             current_animation_idx: 0,
-            animation_indeces: CAT_MAP.get(&DEBUG_ANIMATION).unwrap().clone(),
+            animation_indeces: initial_indices,
         },
     ));
 }
