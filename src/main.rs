@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use bevy::prelude::*;
 use lazy_static::lazy_static;
 
-const DEBUG_ANIMATION: usize = 21;
+const DEBUG_ANIMATION: usize = 0;
 
 #[derive(Component, Deref, DerefMut)]
 struct AnimationTimer(Timer);
@@ -58,7 +58,13 @@ lazy_static! {
         (18, vec![304, 305, 306, 307, 312, 313, 314, 315]),
         (19, vec![320, 321, 322, 323, 328, 329, 330, 331]),
         (20, vec![336, 337, 338, 339]),
-        (21, vec![344, 345, 346, 347, 352, 353, 354, 355, 360, 361, 362, 363]) // poop
+        (21, vec![344, 345, 346, 347, 352, 353, 354, 355, 360, 361, 362, 363]), // poop
+        (22, vec![
+            368, 369, 370, 371, 372, 373, 374, 375, 376, 377, 378, 379, 
+            380, 381, 382, 383, 384, 385, 386, 387, 388, 389, 390, 391, 
+        ]),
+        (23, vec![392, 393]), 
+        (24, vec![400, 401]), 
 
     ]
     .into_iter()
@@ -128,7 +134,6 @@ fn animate_cat(
         &mut CurrentAnimation,
     )>,
 ) {
-    return;
     for (mut timer, mut sprite, mut animation) in &mut query {
         timer.tick(time.delta());
         if timer.just_finished() {
