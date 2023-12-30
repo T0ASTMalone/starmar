@@ -25,8 +25,10 @@ fn update_animation(
     current_animation.current_animation_idx = 0;
     current_animation.is_loop = animation_info.is_loop;
 }
-
+// TODO: only render a few floor tiles
+// TODO: add floor tiles if approching edges
 pub fn floor_controlls(keys: Res<Input<KeyCode>>, mut query: Query<(&Floor, &mut Transform)>) {
+    
     if keys.just_pressed(KeyCode::Down) {
         for (_, mut transform) in &mut query {
             transform.translation.y -= 1.;
@@ -72,6 +74,8 @@ pub fn controlls(
         &mut TextureAtlasSprite,
     )>,
 ) {
+    // TODO: add is jumping to Player. If jumping wait until animation is done before processing
+    // keys
     if keys.just_pressed(KeyCode::Space) {
         for (_, mut current_animation, map, _) in &mut query {
             update_animation(&mut current_animation, map, AnimationActions::Jump);
