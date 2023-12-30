@@ -32,14 +32,12 @@ pub fn floor_controlls(keys: Res<Input<KeyCode>>, mut query: Query<(&Floor, &mut
     if keys.just_pressed(KeyCode::Down) {
         for (_, mut transform) in &mut query {
             transform.translation.y -= 1.;
-            println!("New y corrd: {}", transform.translation.y);
         }
     }
 
     if keys.just_pressed(KeyCode::Up) {
         for (_, mut transform) in &mut query {
             transform.translation.y += 1.;
-            println!("New y corrd: {}", transform.translation.y);
         }
     }
 
@@ -50,7 +48,6 @@ pub fn floor_controlls(keys: Res<Input<KeyCode>>, mut query: Query<(&Floor, &mut
             } else {
                 5.
             };
-            println!("New y corrd: {}", transform.translation.x);
         }
     }
     if keys.pressed(KeyCode::D) {
@@ -60,15 +57,18 @@ pub fn floor_controlls(keys: Res<Input<KeyCode>>, mut query: Query<(&Floor, &mut
             } else {
                 5.
             };
-            println!("New y corrd: {}", transform.translation.x);
         }
     }
+}
+
+pub fn just_pressed_wasd(keys: &Res<Input<KeyCode>>) -> bool {
+    keys.any_just_pressed([KeyCode::W, KeyCode::A, KeyCode::S, KeyCode::D]) || keys.any_pressed([KeyCode::W, KeyCode::A, KeyCode::S, KeyCode::D])
 }
 
 pub fn controlls(
     keys: Res<Input<KeyCode>>,
     mut query: Query<(
-        &Player,
+        &mut Player,
         &mut CurrentAnimation,
         &AnimationMap,
         &mut TextureAtlasSprite,
@@ -76,38 +76,37 @@ pub fn controlls(
 ) {
     // TODO: add is jumping to Player. If jumping wait until animation is done before processing
     // keys
-    if keys.just_pressed(KeyCode::Space) {
-        for (_, mut current_animation, map, _) in &mut query {
-            update_animation(&mut current_animation, map, AnimationActions::Jump);
-        }
-    }
-
-    if keys.just_pressed(KeyCode::W) {
-        // if croutched sit, if sitting stand
-        for (_, mut current_animation, map, _) in &mut query {
-            update_animation(&mut current_animation, map, AnimationActions::IdleStand);
-        }
-    }
-
-    if keys.just_pressed(KeyCode::A) {
-        // turn left
-        for (_, _, _, mut sprite) in &mut query {
+    for (mut player, mut current_animation, map, mut sprite) in &mut query {
+        if keys.just_pressed(KeyCode::A) {
+            // turn left
             sprite.flip_x = true;
         }
-    }
 
-    if keys.just_released(KeyCode::W)
-        || keys.just_released(KeyCode::S)
-        || keys.just_released(KeyCode::A)
-        || keys.just_released(KeyCode::D)
-    {
-        for (_, mut current_animation, map, _) in &mut query {
+        if keys.just_pressed(KeyCode::D) {
+            // turn right
+            sprite.flip_x = false;
+        }
+
+        if player.is_airborne {
+            continue
+        }
+
+        if keys.just_pressed(KeyCode::Space) {
+            player.is_airborne = true;
+            update_animation(&mut current_animation, map, AnimationActions::Jump);
+            continue;
+        } 
+
+        if keys.just_pressed(KeyCode::W) {
+            // if croutched sit, if sitting stand
+            update_animation(&mut current_animation, map, AnimationActions::IdleStand);
+        }
+
+        if keys.just_released(KeyCode::A) || keys.just_released(KeyCode::D) {
             update_animation(&mut current_animation, map, AnimationActions::IdleStand)
         }
-    }
 
-    if keys.pressed(KeyCode::A) {
-        for (_, mut current_animation, map, mut sprite) in &mut query {
+        if keys.pressed(KeyCode::A) {
 
             if !sprite.flip_x {
                 sprite.flip_x = true;
@@ -125,25 +124,16 @@ pub fn controlls(
                 update_animation(&mut current_animation, map, AnimationActions::Run)
             }
         }
-    }
 
-    if keys.just_pressed(KeyCode::S) {
-        // croutch
-        for (_, mut current_animation, map, _) in &mut query {
+        if keys.just_pressed(KeyCode::S) {
+            // croutch
             // if standing sit, if sitting croutch
             update_animation(&mut current_animation, map, AnimationActions::Croutch);
         }
-    }
 
-    if keys.just_pressed(KeyCode::D) {
-        // turn right
-        for (_, _, _, mut sprite) in &mut query {
-            sprite.flip_x = false;
-        }
-    }
+        
 
-    if keys.pressed(KeyCode::D) {
-        for (_, mut current_animation, map, mut sprite) in &mut query {
+        if keys.pressed(KeyCode::D) {
             if sprite.flip_x {
                 sprite.flip_x = false;
             }

@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use bevy::prelude::*;
+use controlls::just_pressed_wasd;
 use sprite_animation_keys::{AnimationActions, AnimationInfo};
 
 use crate::sprite_animation_keys::CAT_MAP;
@@ -26,7 +27,9 @@ pub struct CurrentAnimation {
 }
 
 #[derive(Component)]
-pub struct Player;
+pub struct Player {
+    is_airborne: bool,
+}
 
 #[derive(Component)]
 pub struct Floor;
@@ -81,14 +84,16 @@ fn _animation_test(
 
 fn animate_cat(
     time: Res<Time>,
+    keys: Res<Input<KeyCode>>,
     mut query: Query<(
         &mut AnimationTimer,
         &mut TextureAtlasSprite,
         &mut CurrentAnimation,
         &AnimationMap,
+        &mut Player,
     )>,
 ) {
-    for (mut timer, mut sprite, mut animation, map) in &mut query {
+    for (mut timer, mut sprite, mut animation, map, mut player) in &mut query {
         timer.tick(time.delta());
         if timer.just_finished() {
             animation.current_animation_idx =
@@ -96,13 +101,31 @@ fn animate_cat(
                     if animation.is_loop {
                         0
                     } else {
-                        animation.current_animation = AnimationActions::Idle;
+                        // jump animation is over. player is no longer airborne
+                        if animation.current_animation == AnimationActions::Jump {
+                            println!("Player landed");
+                            player.is_airborne = false;
+                        }
+
+                        if !just_pressed_wasd(&keys)
+                            && animation.current_animation != AnimationActions::IdleStand
+                            && animation.current_animation != AnimationActions::Idle
+                        {
+                            println!("Keys where not pressed. Setting to idle");
+                            animation.current_animation = if animation.current_animation == AnimationActions::Jump {
+                                    AnimationActions::IdleStand
+                                } else {
+                                    AnimationActions::Idle
+                                }
+                        }
+
                         let indeces = map.0.get(&animation.current_animation).unwrap().clone();
 
                         animation.animation_indeces = indeces.indices;
                         animation.current_animation_idx = 0;
                         0
                     }
+
                 } else {
                     animation.current_animation_idx + 1
                 };
@@ -146,7 +169,7 @@ fn setup(
             animation_indeces: animation_info.indices,
             is_loop: animation_info.is_loop,
         },
-        Player,
+        Player { is_airborne: false },
     ));
 }
 
@@ -163,10 +186,9 @@ fn setup_map(mut commands: Commands, assets_server: Res<AssetServer>) {
                 transform: Transform::from_xyz(x, -136., 1.),
                 // transform: Transform::from_scale(Vec3::new(1.0, 0.5, 1.0)),
                 ..default()
-            }, 
-            Floor
+            },
+            Floor,
         ));
-
     }
 }
 
