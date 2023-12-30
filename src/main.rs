@@ -22,11 +22,14 @@ pub struct CurrentAnimation {
     current_animation: AnimationActions,
     current_animation_idx: usize,
     animation_indeces: Vec<usize>,
-    is_loop: bool
+    is_loop: bool,
 }
 
 #[derive(Component)]
 pub struct Player;
+
+#[derive(Component)]
+pub struct Floor;
 
 fn _animation_test(
     keys: Res<Input<KeyCode>>,
@@ -82,7 +85,7 @@ fn animate_cat(
         &mut AnimationTimer,
         &mut TextureAtlasSprite,
         &mut CurrentAnimation,
-        &AnimationMap
+        &AnimationMap,
     )>,
 ) {
     for (mut timer, mut sprite, mut animation, map) in &mut query {
@@ -91,22 +94,14 @@ fn animate_cat(
             animation.current_animation_idx =
                 if animation.animation_indeces.len() - 1 == animation.current_animation_idx {
                     if animation.is_loop {
-                        println!("Is Loop"); 
                         0
                     } else {
-                        // update animation
                         animation.current_animation = AnimationActions::Idle;
-                        let indeces = map
-                            .0
-                            .get(&animation.current_animation)
-                            .unwrap()
-                            .clone();
+                        let indeces = map.0.get(&animation.current_animation).unwrap().clone();
 
                         animation.animation_indeces = indeces.indices;
                         animation.current_animation_idx = 0;
-                        // update animation
-
-                        0  
+                        0
                     }
                 } else {
                     animation.current_animation_idx + 1
@@ -149,10 +144,30 @@ fn setup(
             current_animation: DEBUG_ANIMATION,
             current_animation_idx: 0,
             animation_indeces: animation_info.indices,
-            is_loop: animation_info.is_loop
+            is_loop: animation_info.is_loop,
         },
         Player,
     ));
+}
+
+fn setup_map(mut commands: Commands, assets_server: Res<AssetServer>) {
+    for i in -10..10 {
+        let x = 0. + (i as f32 * 299.);
+        commands.spawn((
+            SpriteBundle {
+                sprite: Sprite {
+                    custom_size: Some(Vec2::new(299.0, 100.)),
+                    ..default()
+                },
+                texture: assets_server.load("../assets/ground2.png"),
+                transform: Transform::from_xyz(x, -136., 1.),
+                // transform: Transform::from_scale(Vec3::new(1.0, 0.5, 1.0)),
+                ..default()
+            }, 
+            Floor
+        ));
+
+    }
 }
 
 fn camera_setup(mut commands: Commands) {
@@ -163,11 +178,12 @@ fn main() {
     App::new()
         // default_nearest to prevent blury sprites
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
-        .add_systems(Startup, (camera_setup, setup))
+        .add_systems(Startup, (camera_setup, setup_map, setup))
         .add_systems(
             Update,
             (
                 controlls::controlls,
+                controlls::floor_controlls,
                 animate_cat,
                 bevy::window::close_on_esc,
             ),
