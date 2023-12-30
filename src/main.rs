@@ -34,6 +34,9 @@ pub struct Player {
 #[derive(Component)]
 pub struct Floor;
 
+#[derive(Resource)]
+pub struct World { pos: Vec2 }
+
 fn _animation_test(
     keys: Res<Input<KeyCode>>,
     mut query: Query<(
@@ -174,8 +177,11 @@ fn setup(
 }
 
 fn setup_map(mut commands: Commands, assets_server: Res<AssetServer>) {
-    for i in -10..10 {
+    
+    for i in -4..4 {
+
         let x = 0. + (i as f32 * 299.);
+
         commands.spawn((
             SpriteBundle {
                 sprite: Sprite {
@@ -200,12 +206,13 @@ fn main() {
     App::new()
         // default_nearest to prevent blury sprites
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
+        .insert_resource(World { pos: Vec2::new(0., 0.)})
         .add_systems(Startup, (camera_setup, setup_map, setup))
         .add_systems(
             Update,
             (
                 controlls::controlls,
-                controlls::floor_controlls,
+                controlls::update_floor,
                 animate_cat,
                 bevy::window::close_on_esc,
             ),
