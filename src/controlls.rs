@@ -1,14 +1,13 @@
-use std::f32::{MAX, MIN};
-
 use bevy::{
     ecs::system::{Query, Res},
     input::{keyboard::KeyCode, Input},
-    prelude::{Transform, ViewVisibility, ResMut},
+    prelude::Transform,
     sprite::TextureAtlasSprite,
+    window::Window,
 };
 
 use crate::{
-    sprite_animation_keys::AnimationActions, AnimationMap, CurrentAnimation, Floor, Player, World,
+    sprite_animation_keys::AnimationActions, AnimationMap, CurrentAnimation, Floor, Player
 };
 
 fn update_animation(
@@ -29,11 +28,11 @@ fn update_animation(
 }
 
 enum Direction {
-    Left, 
+    Left,
     Right,
     Up,
     Down,
-    None
+    None,
 }
 
 // TODO: only render a few floor tiles
@@ -41,28 +40,18 @@ enum Direction {
 // TODO: for finite game add map generation or map loading system
 pub fn update_floor(
     keys: Res<Input<KeyCode>>,
-    mut world: ResMut<crate::World>,
+    window: Query<&Window>,
     mut query: Query<(&Floor, &mut Transform)>,
 ) {
     let diff = if keys.pressed(KeyCode::ShiftLeft) {
-            10.
-        } else {
-            5.
-        };
+        10.
+    } else {
+        5.
+    };
 
     let mut direction = Direction::None;
-    let mut min: f32 = MAX;
-    let mut max: f32 = MIN;
 
     for (_, mut transform) in &mut query {
-        if transform.translation.x < min {
-            min = transform.translation.x;
-        }
-
-        if transform.translation.x > max {
-            max = transform.translation.x;
-        }
-        
         if keys.pressed(KeyCode::A) {
             direction = Direction::Left;
             transform.translation.x = transform.translation.x + diff;
@@ -73,91 +62,31 @@ pub fn update_floor(
             transform.translation.x = transform.translation.x - diff;
         }
     }
+    // need to cach this
+    let half_width = window.get_single().unwrap().width() / 2.;
 
-    let min_min = min + (299. * 2.);
-    let max_max = max - (299. * 2.);
-
-
-    world.pos.x = match direction {
-         Direction::Left => {
-            println!("Current min {}", min_min);
+    match direction {
+        Direction::Left => {
             for (_, mut transform) in &mut query {
-                if transform.translation.x == (max + diff) && world.pos.x < min_min {
-                    println!("New min : {}", min - 299. + diff + (299. * 2.));
-                    transform.translation.x = min - 299. + diff;
+                if transform.translation.x - 149.5 > half_width {
+                    // lol is x pos from the center of the tile?
+                    let new_x = (299. * -2.) + diff + 149.5;
+                    // println!("New X: {}", new_x);
+                    transform.translation.x = new_x;
                 }
             }
-            world.pos.x - diff
-        },
+        }
         Direction::Right => {
             for (_, mut transform) in &mut query {
-                if transform.translation.x == (min - diff) && world.pos.x > max_max {
-                    transform.translation.x = max + 299. - diff;
+                if transform.translation.x + 149.5 < -half_width {
+                    let new_x = 299. - diff + 149.5;
+                    // println!("New X: {}", new_x);
+                    transform.translation.x = new_x;
                 }
             }
-            world.pos.x + diff
-        },
-        _ => world.pos.x
+        }
+        _ => {}
     };
-    /*
-    if Direction::Left {
-        println!("moving first tile to back {} {}", min, max);
-
-        for (_, mut transform, _) in &mut query {
-            if transform.translation.x == min {
-                transform.translation.x = max + 299.;
-            }
-        }
-        //  move first to last pos + 299
-    } else if keys.pressed(KeyCode::A) {
-        // if key pressed A
-        println!("moving last tile to front {} {}", min, max);
-        // move last tile to first pos - 29
-        for (_, mut transform, _) in &mut query {
-            if transform.translation.x == max {
-                transform.translation.x = min - 299.;
-            }
-        }
-    }
-    */
-    // if visibility count > x
-    /*if hid_count >= 3 {
-
-        let mut min = MAX;
-        let mut max = MIN;
-
-        for (_, transform, _) in &mut query {
-            if transform.translation.x < min {
-                min = transform.translation.x;
-            }
-
-            if transform.translation.x > max {
-                max = transform.translation.x;
-            }
-        } 
-
-        //  if key pressed D
-        if keys.pressed(KeyCode::D) {
-            println!("moving first tile to back {} {}", min, max);
-
-            for (_, mut transform, _) in &mut query {
-                if transform.translation.x == min {
-                    transform.translation.x = max + 299.;
-                }
-            }
-            //  move first to last pos + 299
-        } else if keys.pressed(KeyCode::A) {
-            // if key pressed A
-            println!("moving last tile to front {} {}", min, max);
-            // move last tile to first pos - 29
-            for (_, mut transform, _) in &mut query {
-                if transform.translation.x == max {
-                    transform.translation.x = min - 299.;
-                }
-            }
-        }
-    }
-    */
 }
 
 pub fn just_pressed_wasd(keys: &Res<Input<KeyCode>>) -> bool {
@@ -195,7 +124,7 @@ pub fn controlls(
             continue;
         }
 
-        if keys.just_pressed(KeyCode::Space) {
+        if keys.just_pressed(KeyCode::Return) {
             player.is_airborne = true;
             update_animation(&mut current_animation, map, AnimationActions::Jump);
             continue;

@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use bevy::prelude::*;
+use bevy::{prelude::*, window::*};
 use controlls::just_pressed_wasd;
 use sprite_animation_keys::{AnimationActions, AnimationInfo};
 
@@ -32,10 +32,14 @@ pub struct Player {
 }
 
 #[derive(Component)]
-pub struct Floor;
+pub struct Floor {
+    name: String,
+}
 
 #[derive(Resource)]
-pub struct World { pos: Vec2 }
+pub struct World {
+    pos: Vec2,
+}
 
 fn _animation_test(
     keys: Res<Input<KeyCode>>,
@@ -115,7 +119,8 @@ fn animate_cat(
                             && animation.current_animation != AnimationActions::Idle
                         {
                             println!("Keys where not pressed. Setting to idle");
-                            animation.current_animation = if animation.current_animation == AnimationActions::Jump {
+                            animation.current_animation =
+                                if animation.current_animation == AnimationActions::Jump {
                                     AnimationActions::IdleStand
                                 } else {
                                     AnimationActions::Idle
@@ -128,7 +133,6 @@ fn animate_cat(
                         animation.current_animation_idx = 0;
                         0
                     }
-
                 } else {
                     animation.current_animation_idx + 1
                 };
@@ -177,10 +181,9 @@ fn setup(
 }
 
 fn setup_map(mut commands: Commands, assets_server: Res<AssetServer>) {
-    
-    for i in -4..4 {
-
-        let x = 0. + (i as f32 * 299.);
+    let idxs = vec![-299., 0., 299.0];
+    for idx in idxs {
+        info!(idx);
 
         commands.spawn((
             SpriteBundle {
@@ -189,11 +192,13 @@ fn setup_map(mut commands: Commands, assets_server: Res<AssetServer>) {
                     ..default()
                 },
                 texture: assets_server.load("../assets/ground2.png"),
-                transform: Transform::from_xyz(x, -136., 1.),
+                transform: Transform::from_xyz(idx, -136., 1.),
                 // transform: Transform::from_scale(Vec3::new(1.0, 0.5, 1.0)),
                 ..default()
             },
-            Floor,
+            Floor {
+                name: format!("Floor {}", idx),
+            },
         ));
     }
 }
@@ -205,8 +210,20 @@ fn camera_setup(mut commands: Commands) {
 fn main() {
     App::new()
         // default_nearest to prevent blury sprites
-        .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
-        .insert_resource(World { pos: Vec2::new(0., 0.)})
+        .add_plugins(
+            DefaultPlugins
+                .set(ImagePlugin::default_nearest())
+                .set(WindowPlugin {
+                    primary_window: Some(Window {
+                        resolution: (299. * 2., 299. * 2.).into(),
+                        ..default()
+                    }),
+                    ..default()
+                }),
+        )
+        .insert_resource(World {
+            pos: Vec2::new(0., 0.),
+        })
         .add_systems(Startup, (camera_setup, setup_map, setup))
         .add_systems(
             Update,
