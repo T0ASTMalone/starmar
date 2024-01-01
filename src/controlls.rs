@@ -66,6 +66,7 @@ pub fn update_floor(
             for (_, mut transform) in &mut query {
                 if transform.translation.x - 149.5 > half_width {
                     // should use prev diff
+                    // not sure this worked
                     transform.translation.x = (299. * -2.) + (prev_vel - velocity).abs() + 149.5;
                 }
             }
