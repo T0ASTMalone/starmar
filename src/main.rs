@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
-use bevy::prelude::*;
+use bevy::{prelude::*, window::*};
+use controlls::just_pressed_wasd;
 use sprite_animation_keys::{AnimationActions, AnimationInfo};
 
 use crate::sprite_animation_keys::CAT_MAP;
@@ -22,11 +23,22 @@ pub struct CurrentAnimation {
     current_animation: AnimationActions,
     current_animation_idx: usize,
     animation_indeces: Vec<usize>,
-    is_loop: bool
+    is_loop: bool,
 }
 
 #[derive(Component)]
-pub struct Player;
+pub struct Player {
+    is_airborne: bool,
+    velocity: f32,
+}
+
+#[derive(Component)]
+pub struct Floor;
+
+#[derive(Resource)]
+pub struct World {
+    pos: Vec2,
+}
 
 fn _animation_test(
     keys: Res<Input<KeyCode>>,
@@ -78,35 +90,47 @@ fn _animation_test(
 
 fn animate_cat(
     time: Res<Time>,
+    keys: Res<Input<KeyCode>>,
     mut query: Query<(
         &mut AnimationTimer,
         &mut TextureAtlasSprite,
         &mut CurrentAnimation,
-        &AnimationMap
+        &AnimationMap,
+        &mut Player,
     )>,
 ) {
-    for (mut timer, mut sprite, mut animation, map) in &mut query {
+    for (mut timer, mut sprite, mut animation, map, mut player) in &mut query {
         timer.tick(time.delta());
         if timer.just_finished() {
             animation.current_animation_idx =
                 if animation.animation_indeces.len() - 1 == animation.current_animation_idx {
                     if animation.is_loop {
-                        println!("Is Loop"); 
                         0
                     } else {
-                        // update animation
-                        animation.current_animation = AnimationActions::Idle;
-                        let indeces = map
-                            .0
-                            .get(&animation.current_animation)
-                            .unwrap()
-                            .clone();
+                        // jump animation is over. player is no longer airborne
+                        if animation.current_animation == AnimationActions::Jump {
+                            println!("Player landed");
+                            player.is_airborne = false;
+                        }
+
+                        if !just_pressed_wasd(&keys)
+                            && animation.current_animation != AnimationActions::IdleStand
+                            && animation.current_animation != AnimationActions::Idle
+                        {
+                            println!("Keys where not pressed. Setting to idle");
+                            animation.current_animation =
+                                if animation.current_animation == AnimationActions::Jump {
+                                    AnimationActions::IdleStand
+                                } else {
+                                    AnimationActions::Idle
+                                }
+                        }
+
+                        let indeces = map.0.get(&animation.current_animation).unwrap().clone();
 
                         animation.animation_indeces = indeces.indices;
                         animation.current_animation_idx = 0;
-                        // update animation
-
-                        0  
+                        0
                     }
                 } else {
                     animation.current_animation_idx + 1
@@ -130,9 +154,17 @@ fn setup(
 ) {
     // load sprite sheet
     let texture_handle = asset_server.load("../assets/Cat-Sheet.png");
+
     // create texture atlas
-    let texture_atlas =
-        TextureAtlas::from_grid(texture_handle, Vec2::new(32.0, 32.0), 8, 51, None, None);
+    let texture_atlas = TextureAtlas::from_grid(
+        texture_handle, 
+        Vec2::new(32.0, 32.0), 
+        8, 
+        51, 
+        None, 
+        None
+    );
+
     let texture_atlas_handle = texture_atlases.add(texture_atlas);
     let animation_info = CAT_MAP.get(&DEBUG_ANIMATION).unwrap().clone();
 
@@ -149,10 +181,28 @@ fn setup(
             current_animation: DEBUG_ANIMATION,
             current_animation_idx: 0,
             animation_indeces: animation_info.indices,
-            is_loop: animation_info.is_loop
+            is_loop: animation_info.is_loop,
         },
-        Player,
+        Player { is_airborne: false, velocity: 0. },
     ));
+}
+
+fn setup_map(mut commands: Commands, assets_server: Res<AssetServer>) {
+    let idxs = vec![-299., 0., 299.0];
+    for idx in idxs {
+        commands.spawn((
+            SpriteBundle {
+                sprite: Sprite {
+                    custom_size: Some(Vec2::new(299.0, 100.)),
+                    ..default()
+                },
+                texture: assets_server.load("../assets/ground2.png"),
+                transform: Transform::from_xyz(idx, -136., 1.),
+                ..default()
+            },
+            Floor,
+        ));
+    }
 }
 
 fn camera_setup(mut commands: Commands) {
@@ -162,12 +212,26 @@ fn camera_setup(mut commands: Commands) {
 fn main() {
     App::new()
         // default_nearest to prevent blury sprites
-        .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
-        .add_systems(Startup, (camera_setup, setup))
+        .add_plugins(
+            DefaultPlugins
+                .set(ImagePlugin::default_nearest())
+                .set(WindowPlugin {
+                    primary_window: Some(Window {
+                        resolution: (299. * 2., 299. * 2.).into(),
+                        ..default()
+                    }),
+                    ..default()
+                }),
+        )
+        .insert_resource(World {
+            pos: Vec2::new(0., 0.),
+        })
+        .add_systems(Startup, (camera_setup, setup_map, setup))
         .add_systems(
             Update,
             (
                 controlls::controlls,
+                controlls::update_floor,
                 animate_cat,
                 bevy::window::close_on_esc,
             ),
