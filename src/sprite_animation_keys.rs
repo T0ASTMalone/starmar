@@ -95,7 +95,7 @@ lazy_static! {
         (AnimationActions::Respawn, AnimationInfo::new(vec![296, 297, 298, 299, 300, 301, 302, 303], true)), // respawn
 
 
-        (AnimationActions::AttackForward, AnimationInfo::new(vec![304, 305, 306, 307, 312, 313, 314, 315], true)), // front attack
+        (AnimationActions::AttackForward, AnimationInfo::new(vec![304, 305, 306, 307, 312, 313, 314, 315], false)), // front attack
         (AnimationActions::AttackBack, AnimationInfo::new(vec![320, 321, 322, 323, 328, 329, 330, 331], true)), // back attack
         (AnimationActions::AttackRadial, AnimationInfo::new(vec![336, 337, 338, 339], true)), // front/back attack
 

@@ -29,7 +29,18 @@ pub struct CurrentAnimation {
 #[derive(Component)]
 pub struct Player {
     is_airborne: bool,
-    velocity: f32,
+}
+
+#[derive(Component, Debug)]
+pub struct Velocity {
+    pub value: Vec3,
+    pub prev: Vec3,
+}
+
+impl Velocity {
+    pub fn new(value: Vec3, prev: Vec3) -> Self {
+        Self { value, prev }
+    }
 }
 
 #[derive(Component)]
@@ -183,7 +194,8 @@ fn setup(
             animation_indeces: animation_info.indices,
             is_loop: animation_info.is_loop,
         },
-        Player { is_airborne: false, velocity: 0. },
+        Player { is_airborne: false },
+        Velocity { value: Vec3::splat(0.), prev: Vec3::splat(0.)}
     ));
 }
 
@@ -230,8 +242,8 @@ fn main() {
         .add_systems(
             Update,
             (
-                controlls::controlls,
                 controlls::update_floor,
+                controlls::controlls,
                 animate_cat,
                 bevy::window::close_on_esc,
             ),
