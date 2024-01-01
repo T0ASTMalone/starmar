@@ -35,9 +35,6 @@ enum Direction {
     None,
 }
 
-// TODO: only render a few floor tiles
-// TODO: add floor tiles if approching edges for infinite game
-// TODO: for finite game add map generation or map loading system
 pub fn update_floor(
     keys: Res<Input<KeyCode>>,
     window: Query<&Window>,
@@ -107,8 +104,6 @@ pub fn controlls(
         &mut TextureAtlasSprite,
     )>,
 ) {
-    // TODO: add is jumping to Player. If jumping wait until animation is done before processing
-    // keys
     for (mut player, mut current_animation, map, mut sprite) in &mut query {
         if keys.just_pressed(KeyCode::A) {
             // turn left

@@ -32,9 +32,7 @@ pub struct Player {
 }
 
 #[derive(Component)]
-pub struct Floor {
-    name: String,
-}
+pub struct Floor;
 
 #[derive(Resource)]
 pub struct World {
@@ -155,9 +153,17 @@ fn setup(
 ) {
     // load sprite sheet
     let texture_handle = asset_server.load("../assets/Cat-Sheet.png");
+
     // create texture atlas
-    let texture_atlas =
-        TextureAtlas::from_grid(texture_handle, Vec2::new(32.0, 32.0), 8, 51, None, None);
+    let texture_atlas = TextureAtlas::from_grid(
+        texture_handle, 
+        Vec2::new(32.0, 32.0), 
+        8, 
+        51, 
+        None, 
+        None
+    );
+
     let texture_atlas_handle = texture_atlases.add(texture_atlas);
     let animation_info = CAT_MAP.get(&DEBUG_ANIMATION).unwrap().clone();
 
@@ -183,8 +189,6 @@ fn setup(
 fn setup_map(mut commands: Commands, assets_server: Res<AssetServer>) {
     let idxs = vec![-299., 0., 299.0];
     for idx in idxs {
-        info!(idx);
-
         commands.spawn((
             SpriteBundle {
                 sprite: Sprite {
@@ -193,12 +197,9 @@ fn setup_map(mut commands: Commands, assets_server: Res<AssetServer>) {
                 },
                 texture: assets_server.load("../assets/ground2.png"),
                 transform: Transform::from_xyz(idx, -136., 1.),
-                // transform: Transform::from_scale(Vec3::new(1.0, 0.5, 1.0)),
                 ..default()
             },
-            Floor {
-                name: format!("Floor {}", idx),
-            },
+            Floor,
         ));
     }
 }
