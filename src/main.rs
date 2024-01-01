@@ -29,6 +29,7 @@ pub struct CurrentAnimation {
 #[derive(Component)]
 pub struct Player {
     is_airborne: bool,
+    velocity: f32,
 }
 
 #[derive(Component)]
@@ -182,7 +183,7 @@ fn setup(
             animation_indeces: animation_info.indices,
             is_loop: animation_info.is_loop,
         },
-        Player { is_airborne: false },
+        Player { is_airborne: false, velocity: 0. },
     ));
 }
 

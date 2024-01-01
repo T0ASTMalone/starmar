@@ -7,7 +7,7 @@ use bevy::{
 };
 
 use crate::{
-    sprite_animation_keys::AnimationActions, AnimationMap, CurrentAnimation, Floor, Player
+    sprite_animation_keys::AnimationActions, AnimationMap, CurrentAnimation, Player, Floor,
 };
 
 fn update_animation(
@@ -38,52 +38,60 @@ enum Direction {
 pub fn update_floor(
     keys: Res<Input<KeyCode>>,
     window: Query<&Window>,
+    mut player_query: Query<&mut Player>,
     mut query: Query<(&Floor, &mut Transform)>,
 ) {
-    let diff = if keys.pressed(KeyCode::ShiftLeft) {
+    let velocity = if keys.pressed(KeyCode::ShiftLeft) {
         10.
     } else {
         5.
     };
 
-    let mut direction = Direction::None;
+    let direction = if keys.pressed(KeyCode::A) {
+        Direction::Left
+    } else if keys.pressed(KeyCode::D) {
+        Direction::Right
+    } else {
+        Direction::None
+    };
 
-    for (_, mut transform) in &mut query {
-        if keys.pressed(KeyCode::A) {
-            direction = Direction::Left;
-            transform.translation.x = transform.translation.x + diff;
-        }
+    /* update tile location */
 
-        if keys.pressed(KeyCode::D) {
-            direction = Direction::Right;
-            transform.translation.x = transform.translation.x - diff;
-        }
-    }
     // need to cach this
     let half_width = window.get_single().unwrap().width() / 2.;
+    let prev_vel = player_query.get_single().unwrap().velocity;
 
     match direction {
         Direction::Left => {
             for (_, mut transform) in &mut query {
                 if transform.translation.x - 149.5 > half_width {
-                    // lol is x pos from the center of the tile?
-                    let new_x = (299. * -2.) + diff + 149.5;
-                    // println!("New X: {}", new_x);
-                    transform.translation.x = new_x;
+                    // should use prev diff
+                    transform.translation.x = (299. * -2.) + (prev_vel - velocity).abs() + 149.5;
                 }
             }
         }
         Direction::Right => {
             for (_, mut transform) in &mut query {
                 if transform.translation.x + 149.5 < -half_width {
-                    let new_x = 299. - diff + 149.5;
-                    // println!("New X: {}", new_x);
-                    transform.translation.x = new_x;
+                    transform.translation.x = 299. - (prev_vel - velocity).abs() + 149.5;
                 }
             }
         }
         _ => {}
     };
+
+    /* update tile pos */
+    for (_, mut transform) in &mut query {
+        match direction {
+           Direction::Left => transform.translation.x = transform.translation.x + velocity,
+           Direction::Right => transform.translation.x = transform.translation.x - velocity,
+           _ => {}
+        }
+    }
+
+    for mut player in &mut player_query {
+        player.velocity = velocity;
+    }
 }
 
 pub fn just_pressed_wasd(keys: &Res<Input<KeyCode>>) -> bool {
