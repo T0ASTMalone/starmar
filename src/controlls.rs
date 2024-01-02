@@ -1,13 +1,15 @@
 use bevy::{
     ecs::system::{Query, Res},
     input::{keyboard::KeyCode, Input},
-    prelude::{Transform, MouseButton, info, Vec3},
+    prelude::{info, MouseButton, Transform, Vec3},
     sprite::TextureAtlasSprite,
+    time::Time,
     window::Window,
 };
 
 use crate::{
-    sprite_animation_keys::AnimationActions, AnimationMap, CurrentAnimation, Player, Floor, Velocity,
+    sprite_animation_keys::AnimationActions, AnimationMap, CurrentAnimation, Floor, Player,
+    Velocity,
 };
 
 fn update_animation(
@@ -37,30 +39,29 @@ fn is_moving_left(velocity: Vec3) -> bool {
 
 pub fn update_floor(
     window: Query<&Window>,
+    // time: Res<Time>,
     player_query: Query<(&Player, &Velocity)>,
     mut query: Query<(&Floor, &mut Transform)>,
 ) {
-
     let (_, velocity) = player_query.get_single().unwrap();
-    // let velocity_diff = (velocity.value.x - velocity.prev.x).abs();
 
     // need to cach this
     let half_width = window.get_single().unwrap().width() / 2.;
 
     for (_, mut transform) in &mut query {
+
         /* move tile to front or back*/
-        // left 
-        if is_moving_left(velocity.value) && (transform.translation.x - 149.5) > half_width {
-            transform.translation.x = (299. * -2.) + 149.5;
-        }
-        // right 
-        if is_moving_right(velocity.value) && (transform.translation.x + 149.5) < -half_width {
-            transform.translation.x = 299. + 149.5;
-        }
+        if is_moving_left(velocity.value) && (transform.translation.x - 150.) >= half_width {
+            transform.translation.x = (300. * -2.) + 150.;
+        } 
+        if is_moving_right(velocity.value) && (transform.translation.x + 150.) <= -half_width {
+            transform.translation.x = 300. + 150.;
+        } 
         /* end move tile to front or back*/
 
         /* update tile pos */
-        transform.translation.x = transform.translation.x - velocity.value.x; 
+        transform.translation.x -= velocity.value.x;
+
     }
 }
 
@@ -85,6 +86,8 @@ pub fn controlls(
     )>,
 ) {
     for (mut player, mut current_animation, map, mut sprite, mut vel) in &mut query {
+        vel.prev.x = vel.value.x;
+
         if keys.just_pressed(KeyCode::A) {
             // turn left
             sprite.flip_x = true;
@@ -105,9 +108,8 @@ pub fn controlls(
             continue;
         }
 
-        if mouse.just_pressed(MouseButton::Left)  {
+        if mouse.just_pressed(MouseButton::Left) {
             update_animation(&mut current_animation, map, AnimationActions::AttackForward);
-
         }
 
         if keys.just_pressed(KeyCode::W) {
@@ -116,13 +118,11 @@ pub fn controlls(
         }
 
         if released_movement_keys(&keys) {
-            vel.prev.x = vel.value.x;
             vel.value.x = 0.;
             update_animation(&mut current_animation, map, AnimationActions::IdleStand)
         }
 
         if keys.pressed(KeyCode::A) {
-            vel.prev.x = vel.value.x;
             if !sprite.flip_x {
                 sprite.flip_x = true;
             }
@@ -130,14 +130,14 @@ pub fn controlls(
             if !keys.pressed(KeyCode::ShiftLeft)
                 && current_animation.current_animation != AnimationActions::Walk
             {
-                vel.value.x = -5.;
+                vel.value.x = -10.;
                 update_animation(&mut current_animation, map, AnimationActions::Walk)
             }
 
             if keys.pressed(KeyCode::ShiftLeft)
                 && current_animation.current_animation != AnimationActions::Run
             {
-                vel.value.x = -10.;
+                vel.value.x = -20.;
                 update_animation(&mut current_animation, map, AnimationActions::Run)
             }
         }
@@ -149,14 +149,13 @@ pub fn controlls(
         }
 
         if keys.pressed(KeyCode::D) {
-            vel.prev.x = vel.value.x;
             if sprite.flip_x {
                 sprite.flip_x = false;
             }
             if !keys.pressed(KeyCode::ShiftLeft)
                 && current_animation.current_animation != AnimationActions::Walk
             {
-                vel.value.x = 5.;
+                vel.value.x = 10.;
 
                 update_animation(&mut current_animation, map, AnimationActions::Walk)
             }
@@ -164,7 +163,7 @@ pub fn controlls(
             if keys.pressed(KeyCode::ShiftLeft)
                 && current_animation.current_animation != AnimationActions::Run
             {
-                vel.value.x = 10.;
+                vel.value.x = 20.;
                 update_animation(&mut current_animation, map, AnimationActions::Run)
             }
         }

@@ -200,12 +200,12 @@ fn setup(
 }
 
 fn setup_map(mut commands: Commands, assets_server: Res<AssetServer>) {
-    let idxs = vec![-299., 0., 299.0];
+    let idxs = vec![-300., 0., 300.0];
     for idx in idxs {
         commands.spawn((
             SpriteBundle {
                 sprite: Sprite {
-                    custom_size: Some(Vec2::new(299.0, 100.)),
+                    custom_size: Some(Vec2::new(300.0, 100.)),
                     ..default()
                 },
                 texture: assets_server.load("../assets/ground2.png"),
@@ -229,7 +229,7 @@ fn main() {
                 .set(ImagePlugin::default_nearest())
                 .set(WindowPlugin {
                     primary_window: Some(Window {
-                        resolution: (299. * 2., 299. * 2.).into(),
+                        resolution: (600., 600.).into(),
                         ..default()
                     }),
                     ..default()
