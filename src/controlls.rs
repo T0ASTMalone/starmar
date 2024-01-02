@@ -1,13 +1,15 @@
 use bevy::{
     ecs::system::{Query, Res},
     input::{keyboard::KeyCode, Input},
-    prelude::Transform,
+    prelude::{info, MouseButton, Transform, Vec3},
     sprite::TextureAtlasSprite,
+    time::Time,
     window::Window,
 };
 
 use crate::{
-    sprite_animation_keys::AnimationActions, AnimationMap, CurrentAnimation, Player, Floor,
+    sprite_animation_keys::AnimationActions, AnimationMap, CurrentAnimation, Floor, Player,
+    Velocity,
 };
 
 fn update_animation(
@@ -27,71 +29,39 @@ fn update_animation(
     current_animation.is_loop = animation_info.is_loop;
 }
 
-enum Direction {
-    Left,
-    Right,
-    Up,
-    Down,
-    None,
+fn is_moving_right(velocity: Vec3) -> bool {
+    velocity.x > 0.
+}
+
+fn is_moving_left(velocity: Vec3) -> bool {
+    velocity.x < 0.
 }
 
 pub fn update_floor(
-    keys: Res<Input<KeyCode>>,
     window: Query<&Window>,
-    mut player_query: Query<&mut Player>,
+    // time: Res<Time>,
+    player_query: Query<(&Player, &Velocity)>,
     mut query: Query<(&Floor, &mut Transform)>,
 ) {
-    let velocity = if keys.pressed(KeyCode::ShiftLeft) {
-        10.
-    } else {
-        5.
-    };
-
-    let direction = if keys.pressed(KeyCode::A) {
-        Direction::Left
-    } else if keys.pressed(KeyCode::D) {
-        Direction::Right
-    } else {
-        Direction::None
-    };
-
-    /* update tile location */
+    let (_, velocity) = player_query.get_single().unwrap();
 
     // need to cach this
     let half_width = window.get_single().unwrap().width() / 2.;
-    let prev_vel = player_query.get_single().unwrap().velocity;
 
-    match direction {
-        Direction::Left => {
-            for (_, mut transform) in &mut query {
-                if transform.translation.x - 149.5 > half_width {
-                    // should use prev diff
-                    // not sure this worked
-                    transform.translation.x = (299. * -2.) + (prev_vel - velocity).abs() + 149.5;
-                }
-            }
-        }
-        Direction::Right => {
-            for (_, mut transform) in &mut query {
-                if transform.translation.x + 149.5 < -half_width {
-                    transform.translation.x = 299. - (prev_vel - velocity).abs() + 149.5;
-                }
-            }
-        }
-        _ => {}
-    };
-
-    /* update tile pos */
     for (_, mut transform) in &mut query {
-        match direction {
-           Direction::Left => transform.translation.x = transform.translation.x + velocity,
-           Direction::Right => transform.translation.x = transform.translation.x - velocity,
-           _ => {}
-        }
-    }
 
-    for mut player in &mut player_query {
-        player.velocity = velocity;
+        /* move tile to front or back*/
+        if is_moving_left(velocity.value) && (transform.translation.x - 150.) >= half_width {
+            transform.translation.x = (300. * -2.) + 150.;
+        } 
+        if is_moving_right(velocity.value) && (transform.translation.x + 150.) <= -half_width {
+            transform.translation.x = 300. + 150.;
+        } 
+        /* end move tile to front or back*/
+
+        /* update tile pos */
+        transform.translation.x -= velocity.value.x;
+
     }
 }
 
@@ -106,14 +76,18 @@ pub fn released_movement_keys(keys: &Res<Input<KeyCode>>) -> bool {
 
 pub fn controlls(
     keys: Res<Input<KeyCode>>,
+    mouse: Res<Input<MouseButton>>,
     mut query: Query<(
         &mut Player,
         &mut CurrentAnimation,
         &AnimationMap,
         &mut TextureAtlasSprite,
+        &mut Velocity,
     )>,
 ) {
-    for (mut player, mut current_animation, map, mut sprite) in &mut query {
+    for (mut player, mut current_animation, map, mut sprite, mut vel) in &mut query {
+        vel.prev.x = vel.value.x;
+
         if keys.just_pressed(KeyCode::A) {
             // turn left
             sprite.flip_x = true;
@@ -134,12 +108,17 @@ pub fn controlls(
             continue;
         }
 
+        if mouse.just_pressed(MouseButton::Left) {
+            update_animation(&mut current_animation, map, AnimationActions::AttackForward);
+        }
+
         if keys.just_pressed(KeyCode::W) {
             // if croutched sit, if sitting stand
             update_animation(&mut current_animation, map, AnimationActions::IdleStand);
         }
 
         if released_movement_keys(&keys) {
+            vel.value.x = 0.;
             update_animation(&mut current_animation, map, AnimationActions::IdleStand)
         }
 
@@ -151,12 +130,14 @@ pub fn controlls(
             if !keys.pressed(KeyCode::ShiftLeft)
                 && current_animation.current_animation != AnimationActions::Walk
             {
+                vel.value.x = -10.;
                 update_animation(&mut current_animation, map, AnimationActions::Walk)
             }
 
             if keys.pressed(KeyCode::ShiftLeft)
                 && current_animation.current_animation != AnimationActions::Run
             {
+                vel.value.x = -20.;
                 update_animation(&mut current_animation, map, AnimationActions::Run)
             }
         }
@@ -174,12 +155,15 @@ pub fn controlls(
             if !keys.pressed(KeyCode::ShiftLeft)
                 && current_animation.current_animation != AnimationActions::Walk
             {
+                vel.value.x = 10.;
+
                 update_animation(&mut current_animation, map, AnimationActions::Walk)
             }
 
             if keys.pressed(KeyCode::ShiftLeft)
                 && current_animation.current_animation != AnimationActions::Run
             {
+                vel.value.x = 20.;
                 update_animation(&mut current_animation, map, AnimationActions::Run)
             }
         }

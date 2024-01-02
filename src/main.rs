@@ -29,7 +29,18 @@ pub struct CurrentAnimation {
 #[derive(Component)]
 pub struct Player {
     is_airborne: bool,
-    velocity: f32,
+}
+
+#[derive(Component, Debug)]
+pub struct Velocity {
+    pub value: Vec3,
+    pub prev: Vec3,
+}
+
+impl Velocity {
+    pub fn new(value: Vec3, prev: Vec3) -> Self {
+        Self { value, prev }
+    }
 }
 
 #[derive(Component)]
@@ -183,17 +194,18 @@ fn setup(
             animation_indeces: animation_info.indices,
             is_loop: animation_info.is_loop,
         },
-        Player { is_airborne: false, velocity: 0. },
+        Player { is_airborne: false },
+        Velocity { value: Vec3::splat(0.), prev: Vec3::splat(0.)}
     ));
 }
 
 fn setup_map(mut commands: Commands, assets_server: Res<AssetServer>) {
-    let idxs = vec![-299., 0., 299.0];
+    let idxs = vec![-300., 0., 300.0];
     for idx in idxs {
         commands.spawn((
             SpriteBundle {
                 sprite: Sprite {
-                    custom_size: Some(Vec2::new(299.0, 100.)),
+                    custom_size: Some(Vec2::new(300.0, 100.)),
                     ..default()
                 },
                 texture: assets_server.load("../assets/ground2.png"),
@@ -217,7 +229,7 @@ fn main() {
                 .set(ImagePlugin::default_nearest())
                 .set(WindowPlugin {
                     primary_window: Some(Window {
-                        resolution: (299. * 2., 299. * 2.).into(),
+                        resolution: (600., 600.).into(),
                         ..default()
                     }),
                     ..default()
@@ -230,8 +242,8 @@ fn main() {
         .add_systems(
             Update,
             (
-                controlls::controlls,
                 controlls::update_floor,
+                controlls::controlls,
                 animate_cat,
                 bevy::window::close_on_esc,
             ),
