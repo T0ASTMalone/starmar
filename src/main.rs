@@ -2,12 +2,16 @@ use std::collections::HashMap;
 
 use bevy::{prelude::*, window::*};
 use controlls::just_pressed_wasd;
+use obstacle_plugin::ObstaclePlugin;
 use sprite_animation_keys::{AnimationActions, AnimationInfo};
 
 use crate::sprite_animation_keys::CAT_MAP;
 
+use collision_detection::{CollectionDetectionPlugin, Collider};
 // modules
+pub mod obstacle_plugin;
 pub mod controlls;
+pub mod collision_detection;
 pub mod sprite_animation_keys;
 
 const DEBUG_ANIMATION: AnimationActions = AnimationActions::Idle;
@@ -195,7 +199,8 @@ fn setup(
             is_loop: animation_info.is_loop,
         },
         Player { is_airborne: false },
-        Velocity { value: Vec3::splat(0.), prev: Vec3::splat(0.)}
+        Velocity { value: Vec3::splat(0.), prev: Vec3::splat(0.)},
+        Collider::new(30.) 
     ));
 }
 
@@ -248,5 +253,7 @@ fn main() {
                 bevy::window::close_on_esc,
             ),
         )
+        .add_plugins(CollectionDetectionPlugin)
+        .add_plugins(ObstaclePlugin)
         .run();
 }

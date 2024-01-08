@@ -9,7 +9,7 @@ use bevy::{
 
 use crate::{
     sprite_animation_keys::AnimationActions, AnimationMap, CurrentAnimation, Floor, Player,
-    Velocity,
+    Velocity, collision_detection::Collider,
 };
 
 fn update_animation(
@@ -40,11 +40,16 @@ fn is_moving_left(velocity: Vec3) -> bool {
 pub fn update_floor(
     window: Query<&Window>,
     // time: Res<Time>,
-    player_query: Query<(&Player, &Velocity)>,
+    player_query: Query<(&Player, &Velocity, &Collider)>,
     mut query: Query<(&Floor, &mut Transform)>,
 ) {
-    let (_, velocity) = player_query.get_single().unwrap();
+    let (_, velocity, collider) = player_query.get_single().unwrap();
 
+    for &collided_entity in &collider.colliding_entities {
+        if let Ok(ent) = query.get(collided_entity) {
+            println!("collided entity {:?}", ent.1);
+        }
+    }
     // need to cach this
     let half_width = window.get_single().unwrap().width() / 2.;
 
@@ -61,7 +66,6 @@ pub fn update_floor(
 
         /* update tile pos */
         transform.translation.x -= velocity.value.x;
-
     }
 }
 
