@@ -2,12 +2,14 @@ use std::collections::HashMap;
 
 use bevy::{prelude::*, window::*};
 use controlls::just_pressed_wasd;
+use gravity::Gravity;
 use sprite_animation_keys::{AnimationActions, AnimationInfo};
 
 use crate::sprite_animation_keys::CAT_MAP;
 
 // modules
 pub mod controlls;
+pub mod gravity;
 pub mod sprite_animation_keys;
 
 const DEBUG_ANIMATION: AnimationActions = AnimationActions::Idle;
@@ -195,7 +197,8 @@ fn setup(
             is_loop: animation_info.is_loop,
         },
         Player { is_airborne: false },
-        Velocity { value: Vec3::splat(0.), prev: Vec3::splat(0.)}
+        Velocity { value: Vec3::splat(0.), prev: Vec3::splat(0.)},
+        Gravity
     ));
 }
 
@@ -245,6 +248,7 @@ fn main() {
                 controlls::update_floor,
                 controlls::controlls,
                 animate_cat,
+                gravity::gravity_system,
                 bevy::window::close_on_esc,
             ),
         )
