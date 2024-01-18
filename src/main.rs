@@ -3,15 +3,17 @@ use std::collections::HashMap;
 use bevy::prelude::*;
 use collision::Collider;
 use controlls::just_pressed_wasd;
+use debug_bounding_box::{draw_bounding_boxes, DebugBoundingBox};
 use gravity::Gravity;
 use sprite_animation_keys::{AnimationActions, AnimationInfo};
 
 use crate::sprite_animation_keys::CAT_MAP;
 
 // modules
-pub mod controlls;
-pub mod gravity;
 pub mod collision;
+pub mod controlls;
+pub mod debug_bounding_box;
+pub mod gravity;
 pub mod sprite_animation_keys;
 
 const DEBUG_ANIMATION: AnimationActions = AnimationActions::Idle;
@@ -171,14 +173,8 @@ fn setup(
     let texture_handle = asset_server.load("../assets/Cat-Sheet.png");
 
     // create texture atlas
-    let texture_atlas = TextureAtlas::from_grid(
-        texture_handle, 
-        Vec2::new(32.0, 32.0), 
-        8, 
-        51, 
-        None, 
-        None
-    );
+    let texture_atlas =
+        TextureAtlas::from_grid(texture_handle, Vec2::new(32.0, 32.0), 8, 51, None, None);
 
     let texture_atlas_handle = texture_atlases.add(texture_atlas);
     let animation_info = CAT_MAP.get(&DEBUG_ANIMATION).unwrap().clone();
@@ -199,9 +195,12 @@ fn setup(
             is_loop: animation_info.is_loop,
         },
         Player { is_airborne: false },
-        Velocity { value: Vec3::splat(0.), prev: Vec3::splat(0.)},
-        Gravity,
-        Collider::new(160.)
+        Velocity {
+            value: Vec3::splat(0.),
+            prev: Vec3::splat(0.),
+        },
+        Collider::new(160.),
+        DebugBoundingBox::new(Rect::from_center_size(Vec2::ZERO, Vec2::splat(16.))),
     ));
 }
 
@@ -219,7 +218,8 @@ fn setup_map(mut commands: Commands, assets_server: Res<AssetServer>) {
                 ..default()
             },
             Floor,
-            Collider::new(122.)
+            Collider::new(122.),
+            DebugBoundingBox::new(Rect::new(idx, -200., idx + 300., -100.)),
         ));
     }
 }
@@ -246,6 +246,7 @@ fn main() {
             pos: Vec2::new(0., 0.),
         })
         .add_systems(Startup, (camera_setup, setup_map, setup))
+        .add_systems(PostStartup, draw_bounding_boxes)
         .add_systems(
             Update,
             (
