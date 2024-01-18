@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
-use bevy::{prelude::*, window::*};
+use bevy::prelude::*;
+use collision::Collider;
 use controlls::just_pressed_wasd;
 use gravity::Gravity;
 use sprite_animation_keys::{AnimationActions, AnimationInfo};
@@ -10,6 +11,7 @@ use crate::sprite_animation_keys::CAT_MAP;
 // modules
 pub mod controlls;
 pub mod gravity;
+pub mod collision;
 pub mod sprite_animation_keys;
 
 const DEBUG_ANIMATION: AnimationActions = AnimationActions::Idle;
@@ -198,7 +200,8 @@ fn setup(
         },
         Player { is_airborne: false },
         Velocity { value: Vec3::splat(0.), prev: Vec3::splat(0.)},
-        Gravity
+        Gravity,
+        Collider::new(160.)
     ));
 }
 
@@ -212,10 +215,11 @@ fn setup_map(mut commands: Commands, assets_server: Res<AssetServer>) {
                     ..default()
                 },
                 texture: assets_server.load("../assets/ground2.png"),
-                transform: Transform::from_xyz(idx, -136., 1.),
+                transform: Transform::from_xyz(idx, -200., 1.),
                 ..default()
             },
             Floor,
+            Collider::new(122.)
         ));
     }
 }
@@ -248,6 +252,7 @@ fn main() {
                 controlls::update_floor,
                 controlls::controlls,
                 animate_cat,
+                collision::floor_collision,
                 gravity::gravity_system,
                 bevy::window::close_on_esc,
             ),
