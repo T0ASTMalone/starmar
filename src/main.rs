@@ -179,11 +179,15 @@ fn setup(
     let texture_atlas_handle = texture_atlases.add(texture_atlas);
     let animation_info = CAT_MAP.get(&DEBUG_ANIMATION).unwrap().clone();
 
+    let transform = Transform::from_scale(Vec3::splat(6.0));
+
+    let rect = Rect::new(-12., 0., 24., 24.);
+
     commands.spawn((
         SpriteSheetBundle {
             texture_atlas: texture_atlas_handle,
             sprite: TextureAtlasSprite::new(*animation_info.indices.get(0).unwrap()),
-            transform: Transform::from_scale(Vec3::splat(6.0)),
+            transform: transform.clone(),
             ..default()
         },
         AnimationMap(CAT_MAP.clone()),
@@ -200,13 +204,14 @@ fn setup(
             prev: Vec3::splat(0.),
         },
         Collider::new(160.),
-        DebugBoundingBox::new(Rect::from_center_size(Vec2::ZERO, Vec2::splat(16.))),
+        DebugBoundingBox::new(rect),
     ));
 }
 
 fn setup_map(mut commands: Commands, assets_server: Res<AssetServer>) {
     let idxs = vec![-300., 0., 300.0];
     for idx in idxs {
+        let rect = Rect::new(idx, -200., idx + 300., -100.);
         commands.spawn((
             SpriteBundle {
                 sprite: Sprite {
@@ -219,7 +224,7 @@ fn setup_map(mut commands: Commands, assets_server: Res<AssetServer>) {
             },
             Floor,
             Collider::new(122.),
-            DebugBoundingBox::new(Rect::new(idx, -200., idx + 300., -100.)),
+            DebugBoundingBox::new(rect),
         ));
     }
 }

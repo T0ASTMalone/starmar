@@ -21,30 +21,37 @@ impl DebugBoundingBox {
     }
 }
 
-const WIDTH: f32 = 0.5;
+const WIDTH: f32 = 1.;
+const BOUNDING_Z: f32 = 10.;
 
 pub fn draw_bounding_boxes(mut commands: Commands, query: Query<(&DebugBoundingBox, &Transform)>) {
     for (dbg_bouding_box, transform) in &query {
-        println!("width: {}", dbg_bouding_box.rect.width());
-        let transform = Transform::from_scale(transform.scale);
+        let color = Color::rgb(1., 1., 1.);
+
+        let half_height = dbg_bouding_box.rect.height() / 2.;
+        let half_width = dbg_bouding_box.rect.width() / 2.;
+
+        println!("rect : {:?}", dbg_bouding_box);
 
         let mut top_bar = transform.clone();
-        top_bar.translation.y += WIDTH;
+        top_bar.translation.y += half_height;
+        top_bar.translation.z = BOUNDING_Z;
 
         let mut bottom_bar = transform.clone();
-        bottom_bar.translation.y -= (dbg_bouding_box.rect.height() + WIDTH) * transform.scale.y;
+        bottom_bar.translation.y -= half_height;
+        bottom_bar.translation.z = BOUNDING_Z;
 
         let mut left_bar = transform.clone();
-        left_bar.translation.x -= (dbg_bouding_box.rect.width() + WIDTH) * (transform.scale.x / 2.);
-        left_bar.translation.y -= (dbg_bouding_box.rect.height() + WIDTH) * (transform.scale.y / 2.);
+        left_bar.translation.x -= half_width;
+        left_bar.translation.z = BOUNDING_Z;
 
         let mut right_bar = transform.clone();
-        right_bar.translation.x += (dbg_bouding_box.rect.width() + WIDTH) * (transform.scale.x / 2.);
-        right_bar.translation.y -= (dbg_bouding_box.rect.height() + WIDTH) * (transform.scale.y / 2.);
+        left_bar.translation.x += half_width;
+        right_bar.translation.z = BOUNDING_Z;
 
         commands.spawn(SpriteBundle {
             sprite: Sprite {
-                color: Color::rgb(0.25, 0.25, 0.75),
+                color,
                 custom_size: Some(Vec2::new(dbg_bouding_box.rect.width() + (WIDTH * 2.), WIDTH)),
                 ..default()
             },
@@ -54,7 +61,7 @@ pub fn draw_bounding_boxes(mut commands: Commands, query: Query<(&DebugBoundingB
 
         commands.spawn(SpriteBundle {
             sprite: Sprite {
-                color: Color::rgb(0.25, 0.75, 0.75),
+                color,
                 custom_size: Some(Vec2::new(dbg_bouding_box.rect.width() + (WIDTH * 2.), WIDTH)),
                 ..default()
             },
@@ -64,7 +71,7 @@ pub fn draw_bounding_boxes(mut commands: Commands, query: Query<(&DebugBoundingB
 
         commands.spawn(SpriteBundle {
             sprite: Sprite {
-                color: Color::rgb(0.25, 0.25, 0.75),
+                color,
                 custom_size: Some(Vec2::new(WIDTH, dbg_bouding_box.rect.height() + (WIDTH * 2.))),
                 ..default()
             },
@@ -74,7 +81,7 @@ pub fn draw_bounding_boxes(mut commands: Commands, query: Query<(&DebugBoundingB
 
         commands.spawn(SpriteBundle {
             sprite: Sprite {
-                color: Color::rgb(0.25, 0.75, 0.75),
+                color,
                 custom_size: Some(Vec2::new(WIDTH, dbg_bouding_box.rect.height() + (WIDTH * 2.))),
                 ..default()
             },
