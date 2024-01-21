@@ -181,7 +181,7 @@ fn setup(
 
     let transform = Transform::from_scale(Vec3::splat(6.0));
 
-    let rect = Rect::new(-12., 0., 24., 24.);
+    let rect = Rect::new(-18., -36., 0., -9.);
 
     commands.spawn((
         SpriteSheetBundle {
@@ -204,7 +204,7 @@ fn setup(
             prev: Vec3::splat(0.),
         },
         Collider::new(160.),
-        DebugBoundingBox::new(rect),
+        DebugBoundingBox::new(rect, "player".to_owned()),
     ));
 }
 
@@ -224,7 +224,7 @@ fn setup_map(mut commands: Commands, assets_server: Res<AssetServer>) {
             },
             Floor,
             Collider::new(122.),
-            DebugBoundingBox::new(rect),
+            DebugBoundingBox::new(rect, "floor".to_owned()),
         ));
     }
 }

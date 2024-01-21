@@ -13,11 +13,12 @@ use bevy::{
 #[derive(Component, Debug)]
 pub struct DebugBoundingBox {
     rect: Rect,
+    name: String 
 }
 
 impl DebugBoundingBox {
-    pub fn new(rect: Rect) -> Self {
-        Self { rect }
+    pub fn new(rect: Rect, name: String) -> Self {
+        Self { rect, name }
     }
 }
 
@@ -26,32 +27,36 @@ const BOUNDING_Z: f32 = 10.;
 
 pub fn draw_bounding_boxes(mut commands: Commands, query: Query<(&DebugBoundingBox, &Transform)>) {
     for (dbg_bouding_box, transform) in &query {
-        let color = Color::rgb(1., 1., 1.);
+        let top = Color::rgb(1., 1., 1.); // white
+        let bottom = Color::rgb(0., 0., 0.); // black 
+        let left = Color::rgb(0.5, 0.5, 0.75); // blue? 
 
         let half_height = dbg_bouding_box.rect.height() / 2.;
         let half_width = dbg_bouding_box.rect.width() / 2.;
 
-        println!("rect : {:?}", dbg_bouding_box);
+        if dbg_bouding_box.name == "player" {
+            // println!("scale x : {:?}", transform.scale.x);
+        }
 
         let mut top_bar = transform.clone();
-        top_bar.translation.y += half_height;
+        top_bar.translation.y += half_height * transform.scale.y;
         top_bar.translation.z = BOUNDING_Z;
 
         let mut bottom_bar = transform.clone();
-        bottom_bar.translation.y -= half_height;
+        bottom_bar.translation.y -= half_height * transform.scale.y;
         bottom_bar.translation.z = BOUNDING_Z;
 
         let mut left_bar = transform.clone();
-        left_bar.translation.x -= half_width;
+        left_bar.translation.x -= half_width * transform.scale.x;
         left_bar.translation.z = BOUNDING_Z;
 
         let mut right_bar = transform.clone();
-        left_bar.translation.x += half_width;
+        right_bar.translation.x += half_width * transform.scale.x;
         right_bar.translation.z = BOUNDING_Z;
 
         commands.spawn(SpriteBundle {
             sprite: Sprite {
-                color,
+                color: top,
                 custom_size: Some(Vec2::new(dbg_bouding_box.rect.width() + (WIDTH * 2.), WIDTH)),
                 ..default()
             },
@@ -61,7 +66,7 @@ pub fn draw_bounding_boxes(mut commands: Commands, query: Query<(&DebugBoundingB
 
         commands.spawn(SpriteBundle {
             sprite: Sprite {
-                color,
+                color: bottom,
                 custom_size: Some(Vec2::new(dbg_bouding_box.rect.width() + (WIDTH * 2.), WIDTH)),
                 ..default()
             },
@@ -71,7 +76,7 @@ pub fn draw_bounding_boxes(mut commands: Commands, query: Query<(&DebugBoundingB
 
         commands.spawn(SpriteBundle {
             sprite: Sprite {
-                color,
+                color: left,
                 custom_size: Some(Vec2::new(WIDTH, dbg_bouding_box.rect.height() + (WIDTH * 2.))),
                 ..default()
             },
@@ -81,7 +86,7 @@ pub fn draw_bounding_boxes(mut commands: Commands, query: Query<(&DebugBoundingB
 
         commands.spawn(SpriteBundle {
             sprite: Sprite {
-                color,
+                color: Color::rgb(1., 1., 1.),
                 custom_size: Some(Vec2::new(WIDTH, dbg_bouding_box.rect.height() + (WIDTH * 2.))),
                 ..default()
             },
