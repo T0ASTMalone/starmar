@@ -199,7 +199,8 @@ fn setup(
             value: Vec3::splat(0.),
             prev: Vec3::splat(0.),
         },
-        Collider::new(160.),
+        Gravity,
+        Collider::new(160., rect, Vec2::new(1., 8.)),
         DebugBoundingBox::new(rect, "player".to_owned(), Vec2::new(1., 8.)),
     ));
 }
@@ -220,7 +221,7 @@ fn setup_map(mut commands: Commands, assets_server: Res<AssetServer>) {
                 ..default()
             },
             Floor,
-            Collider::new(122.),
+            Collider::new(122., rect, Vec2::new(0., 5.)),
             DebugBoundingBox::new(rect, "floor".to_owned(), Vec2::new(0., 5.)),
         ));
     }
