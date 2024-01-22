@@ -171,17 +171,13 @@ fn setup(
 ) {
     // load sprite sheet
     let texture_handle = asset_server.load("../assets/Cat-Sheet.png");
-
     // create texture atlas
     let texture_atlas =
         TextureAtlas::from_grid(texture_handle, Vec2::new(32.0, 32.0), 8, 51, None, None);
-
     let texture_atlas_handle = texture_atlases.add(texture_atlas);
     let animation_info = CAT_MAP.get(&DEBUG_ANIMATION).unwrap().clone();
-
     let transform = Transform::from_scale(Vec3::splat(6.0));
-
-    let rect = Rect::new(-18., -36., 0., -9.);
+    let rect = Rect::new(0., 0., 19., 17.5);
 
     commands.spawn((
         SpriteSheetBundle {
@@ -204,14 +200,15 @@ fn setup(
             prev: Vec3::splat(0.),
         },
         Collider::new(160.),
-        DebugBoundingBox::new(rect, "player".to_owned()),
+        DebugBoundingBox::new(rect, "player".to_owned(), Vec2::new(1., 8.)),
     ));
 }
 
 fn setup_map(mut commands: Commands, assets_server: Res<AssetServer>) {
     let idxs = vec![-300., 0., 300.0];
+    let rect = Rect::new(0., 0., 300., 90.);
+
     for idx in idxs {
-        let rect = Rect::new(idx, -200., idx + 300., -100.);
         commands.spawn((
             SpriteBundle {
                 sprite: Sprite {
@@ -224,7 +221,7 @@ fn setup_map(mut commands: Commands, assets_server: Res<AssetServer>) {
             },
             Floor,
             Collider::new(122.),
-            DebugBoundingBox::new(rect, "floor".to_owned()),
+            DebugBoundingBox::new(rect, "floor".to_owned(), Vec2::new(0., 5.)),
         ));
     }
 }
@@ -241,7 +238,7 @@ fn main() {
                 .set(ImagePlugin::default_nearest())
                 .set(WindowPlugin {
                     primary_window: Some(Window {
-                        resolution: (600., 600.).into(),
+                        resolution: (1000., 1000.).into(),
                         ..default()
                     }),
                     ..default()
