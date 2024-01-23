@@ -253,10 +253,10 @@ fn main() {
         .add_systems(
             Update,
             (
+                collision::floor_collision,
                 controlls::update_floor,
                 controlls::controlls,
                 animate_cat,
-                collision::floor_collision,
                 gravity::gravity_system,
                 bevy::window::close_on_esc,
             ),

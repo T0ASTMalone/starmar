@@ -26,7 +26,7 @@ impl DebugBoundingBox {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Hash, Eq, PartialEq, Clone)]
 pub enum WallType {
     Left,
     Right,
@@ -36,7 +36,7 @@ pub enum WallType {
 
 #[derive(Component, Debug)]
 pub struct Boundry {
-    wall_type: WallType
+    pub wall_type: WallType
 }
 
 impl Boundry {
