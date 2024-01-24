@@ -1,9 +1,9 @@
 use bevy::{
-    ecs::{component::Component, entity::Entity, query::Without, system::Query},
+    ecs::{component::Component, query::Without, system::Query},
     math::Vec2,
     prelude::{Children, Rect},
     transform::components::{GlobalTransform, Transform},
-    utils::{HashMap, HashSet},
+    utils::HashMap,
 };
 
 use crate::{
@@ -32,7 +32,6 @@ impl CollidingSides {
 #[derive(Component)]
 pub struct Collider {
     pub radius: f32,
-    pub collider_entities: HashSet<Entity>,
     pub is_grounded: bool,
     pub is_colliding: CollidingSides,
     pub rect: Rect,
@@ -43,7 +42,6 @@ impl Collider {
     pub fn new(radius: f32, rect: Rect, offset: Vec2) -> Self {
         Self {
             radius,
-            collider_entities: HashSet::new(),
             is_grounded: false,
             rect,
             offset,
@@ -69,7 +67,6 @@ pub fn floor_collision(
         }
 
         for (_, _, _, f_children) in &floor_query {
-
             let mut f_boundry_map = HashMap::new();
             for &i in f_children {
                 if let Ok((f_boundry, f_trans)) = children.get(i) {
@@ -133,7 +130,7 @@ pub fn floor_collision(
 
             // if colliding right
             if p_top.translation().y > f_bottom.translation().y
-                && p_bottom.translation().y < f_top.translation().y 
+                && p_bottom.translation().y < f_top.translation().y
                 && !player_collider.is_colliding.right
             {
                 if p_right.translation().x <= f_left.translation().x {

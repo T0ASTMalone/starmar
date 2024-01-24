@@ -9,7 +9,6 @@ const GRAVITY: f32 = 9.8;
 
 pub fn gravity_system(mut query: Query<(&mut Transform, &Collider), With<Gravity>>) {
     for (mut transform, collider) in &mut query {
-        // if not colliding with floor
         if !collider.is_colliding.bottom {
             transform.translation.y -= GRAVITY;
         }
