@@ -31,22 +31,22 @@ impl CollidingSides {
 
 #[derive(Component)]
 pub struct Collider {
-    pub radius: f32,
     pub is_colliding: CollidingSides,
     pub rect: Rect,
     pub offset: Vec2,
 }
 
 impl Collider {
-    pub fn new(radius: f32, rect: Rect, offset: Vec2) -> Self {
+    pub fn new(rect: Rect, offset: Vec2) -> Self {
         Self {
-            radius,
             rect,
             offset,
             is_colliding: CollidingSides::new(),
         }
     }
 }
+
+const BUFFER: f32 = 20.27;
 
 pub fn floor_collision(
     mut player: Query<(&Player, &mut Collider, &Transform, &Children)>,
@@ -108,7 +108,7 @@ pub fn floor_collision(
                 && p_left.translation().x < f_right.translation().x
                 && !player_collider.is_colliding.bottom
             {
-                if (p_bottom.translation().y - 20.) <= f_top.translation().y {
+                if (p_bottom.translation().y - BUFFER) <= f_top.translation().y {
                     player_collider.is_colliding.bottom = true;
                 } else {
                     player_collider.is_colliding.bottom = false;
@@ -119,7 +119,7 @@ pub fn floor_collision(
                 && p_left.translation().x < f_right.translation().x
                 && !player_collider.is_colliding.top
             {
-                if p_top.translation().y >= f_bottom.translation().y {
+                if (p_top.translation().y + BUFFER) >= f_bottom.translation().y {
                     player_collider.is_colliding.top = true;
                 } else {
                     player_collider.is_colliding.top = false;
@@ -131,7 +131,7 @@ pub fn floor_collision(
                 && p_bottom.translation().y < f_top.translation().y
                 && !player_collider.is_colliding.right
             {
-                if p_right.translation().x <= f_left.translation().x {
+                if (p_right.translation().x + BUFFER) >= f_left.translation().x && f_right.translation().x > p_right.translation().x {
                     player_collider.is_colliding.right = true;
                 } else {
                     player_collider.is_colliding.right = false;
@@ -143,7 +143,7 @@ pub fn floor_collision(
                 && p_bottom.translation().y < f_top.translation().y
                 && !player_collider.is_colliding.left
             {
-                if p_left.translation().x >= f_right.translation().x {
+                if (p_left.translation().x - BUFFER) <= f_right.translation().x && f_left.translation().x < p_left.translation().x {
                     player_collider.is_colliding.left = true;
                 } else {
                     player_collider.is_colliding.left = false;

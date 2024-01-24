@@ -200,7 +200,7 @@ fn setup(
             prev: Vec3::splat(0.),
         },
         Gravity,
-        Collider::new(160., rect, Vec2::new(1., 8.)),
+        Collider::new(rect, Vec2::new(1., 8.)),
         DebugBoundingBox::new(rect, Vec2::new(1., 8.)),
     ));
 }
@@ -220,15 +220,53 @@ fn setup_map(mut commands: Commands, assets_server: Res<AssetServer>) {
                 transform: Transform::from_xyz(idx, -200., 1.),
                 ..default()
             },
-            Floor,
-            Collider::new(122., rect, Vec2::new(0., 5.)),
+            Floor, // should just make everything but the player children of the World component
+                   // and then just move the world when position
+            Collider::new(rect, Vec2::new(0., 5.)),
             DebugBoundingBox::new(rect, Vec2::new(0., 5.)),
         ));
     }
 }
 
+
+
 fn camera_setup(mut commands: Commands) {
     commands.spawn(Camera2dBundle::default());
+}
+
+fn setup_obstacle(mut commands: Commands) {
+    let rect =Rect::new(0., 0., 50., 50.);
+    commands
+        .spawn((
+            SpriteBundle {
+                sprite: Sprite {
+                    color: Color::RED,
+                    custom_size: Some(Vec2::new(50., 50.)),
+                    ..default()
+                },
+                transform: Transform::from_xyz(300., -70., 0.),
+                ..default()
+            },
+            Floor,
+            Collider::new(rect, Vec2::new(0., 5.)),
+            DebugBoundingBox::new(rect, Vec2::new(0., 0.))
+        ));
+
+    commands
+        .spawn((
+            SpriteBundle {
+                sprite: Sprite {
+                    color: Color::RED,
+                    custom_size: Some(Vec2::new(50., 50.)),
+                    ..default()
+                },
+                transform: Transform::from_xyz(-200., -70., 0.),
+                ..default()
+            },
+            Floor,
+            Collider::new(rect, Vec2::new(0., 5.)),
+            DebugBoundingBox::new(rect, Vec2::new(0., 0.))
+        ));
 }
 
 fn main() {
@@ -248,7 +286,7 @@ fn main() {
         .insert_resource(World {
             pos: Vec2::new(0., 0.),
         })
-        .add_systems(Startup, (camera_setup, setup_map, setup))
+        .add_systems(Startup, (camera_setup, setup_map, setup, setup_obstacle))
         .add_systems(PostStartup, draw_bounding_boxes)
         .add_systems(
             Update,

@@ -8,7 +8,7 @@ use bevy::{
 
 use crate::{
     sprite_animation_keys::AnimationActions, AnimationMap, CurrentAnimation, Floor, Player,
-    Velocity,
+    Velocity, collision::Collider,
 };
 
 fn update_animation(
@@ -39,28 +39,39 @@ fn is_moving_left(velocity: Vec3) -> bool {
 pub fn update_floor(
     window: Query<&Window>,
     // time: Res<Time>,
-    player_query: Query<(&Player, &Velocity)>,
+    player_query: Query<(&Player, &Collider, &Velocity)>,
     mut query: Query<(&Floor, &mut Transform)>,
 ) {
-    let (_, velocity) = player_query.get_single().unwrap();
+    let (_, collider, velocity) = player_query.get_single().unwrap();
 
     // need to cach this
     let half_width = window.get_single().unwrap().width() / 2.;
 
     for (_, mut transform) in &mut query {
+        
+        if is_moving_left(velocity.value) {
+            if collider.is_colliding.left {
+                return;
+            }
+        }
 
+        if is_moving_right(velocity.value) {
+            if collider.is_colliding.right {
+                return;
+            }
+        }
+        
         /* move tile to front or back*/
         if is_moving_left(velocity.value) && (transform.translation.x - 150.) >= half_width {
             transform.translation.x = (300. * -2.) + 150.;
-        } 
+        }
         if is_moving_right(velocity.value) && (transform.translation.x + 150.) <= -half_width {
             transform.translation.x = 300. + 150.;
-        } 
+        }
         /* end move tile to front or back*/
 
         /* update tile pos */
         transform.translation.x -= velocity.value.x;
-
     }
 }
 
