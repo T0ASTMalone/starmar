@@ -1,13 +1,19 @@
 use std::collections::HashMap;
 
-use bevy::{prelude::*, window::*};
+use bevy::prelude::*;
+use collision::Collider;
 use controlls::just_pressed_wasd;
+use debug_bounding_box::{draw_bounding_boxes, DebugBoundingBox};
+use gravity::Gravity;
 use sprite_animation_keys::{AnimationActions, AnimationInfo};
 
 use crate::sprite_animation_keys::CAT_MAP;
 
 // modules
+pub mod collision;
 pub mod controlls;
+pub mod debug_bounding_box;
+pub mod gravity;
 pub mod sprite_animation_keys;
 
 const DEBUG_ANIMATION: AnimationActions = AnimationActions::Idle;
@@ -165,25 +171,19 @@ fn setup(
 ) {
     // load sprite sheet
     let texture_handle = asset_server.load("../assets/Cat-Sheet.png");
-
     // create texture atlas
-    let texture_atlas = TextureAtlas::from_grid(
-        texture_handle, 
-        Vec2::new(32.0, 32.0), 
-        8, 
-        51, 
-        None, 
-        None
-    );
-
+    let texture_atlas =
+        TextureAtlas::from_grid(texture_handle, Vec2::new(32.0, 32.0), 8, 51, None, None);
     let texture_atlas_handle = texture_atlases.add(texture_atlas);
     let animation_info = CAT_MAP.get(&DEBUG_ANIMATION).unwrap().clone();
+    let transform = Transform::from_scale(Vec3::splat(6.0));
+    let rect = Rect::new(0., 0., 19., 17.5);
 
     commands.spawn((
         SpriteSheetBundle {
             texture_atlas: texture_atlas_handle,
             sprite: TextureAtlasSprite::new(*animation_info.indices.get(0).unwrap()),
-            transform: Transform::from_scale(Vec3::splat(6.0)),
+            transform: transform.clone(),
             ..default()
         },
         AnimationMap(CAT_MAP.clone()),
@@ -195,12 +195,20 @@ fn setup(
             is_loop: animation_info.is_loop,
         },
         Player { is_airborne: false },
-        Velocity { value: Vec3::splat(0.), prev: Vec3::splat(0.)}
+        Velocity {
+            value: Vec3::splat(0.),
+            prev: Vec3::splat(0.),
+        },
+        Gravity,
+        Collider::new(160., rect, Vec2::new(1., 8.)),
+        DebugBoundingBox::new(rect, Vec2::new(1., 8.)),
     ));
 }
 
 fn setup_map(mut commands: Commands, assets_server: Res<AssetServer>) {
     let idxs = vec![-300., 0., 300.0];
+    let rect = Rect::new(0., 0., 300., 90.);
+
     for idx in idxs {
         commands.spawn((
             SpriteBundle {
@@ -209,10 +217,12 @@ fn setup_map(mut commands: Commands, assets_server: Res<AssetServer>) {
                     ..default()
                 },
                 texture: assets_server.load("../assets/ground2.png"),
-                transform: Transform::from_xyz(idx, -136., 1.),
+                transform: Transform::from_xyz(idx, -200., 1.),
                 ..default()
             },
             Floor,
+            Collider::new(122., rect, Vec2::new(0., 5.)),
+            DebugBoundingBox::new(rect, Vec2::new(0., 5.)),
         ));
     }
 }
@@ -229,7 +239,7 @@ fn main() {
                 .set(ImagePlugin::default_nearest())
                 .set(WindowPlugin {
                     primary_window: Some(Window {
-                        resolution: (600., 600.).into(),
+                        resolution: (1000., 1000.).into(),
                         ..default()
                     }),
                     ..default()
@@ -239,12 +249,15 @@ fn main() {
             pos: Vec2::new(0., 0.),
         })
         .add_systems(Startup, (camera_setup, setup_map, setup))
+        .add_systems(PostStartup, draw_bounding_boxes)
         .add_systems(
             Update,
             (
+                collision::floor_collision,
                 controlls::update_floor,
                 controlls::controlls,
                 animate_cat,
+                gravity::gravity_system,
                 bevy::window::close_on_esc,
             ),
         )

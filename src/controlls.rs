@@ -1,9 +1,8 @@
 use bevy::{
     ecs::system::{Query, Res},
     input::{keyboard::KeyCode, Input},
-    prelude::{info, MouseButton, Transform, Vec3},
+    prelude::{MouseButton, Transform, Vec3},
     sprite::TextureAtlasSprite,
-    time::Time,
     window::Window,
 };
 
