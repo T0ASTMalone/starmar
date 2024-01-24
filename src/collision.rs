@@ -32,7 +32,6 @@ impl CollidingSides {
 #[derive(Component)]
 pub struct Collider {
     pub radius: f32,
-    pub is_grounded: bool,
     pub is_colliding: CollidingSides,
     pub rect: Rect,
     pub offset: Vec2,
@@ -42,7 +41,6 @@ impl Collider {
     pub fn new(radius: f32, rect: Rect, offset: Vec2) -> Self {
         Self {
             radius,
-            is_grounded: false,
             rect,
             offset,
             is_colliding: CollidingSides::new(),
