@@ -7,9 +7,23 @@ use bevy::{
 };
 
 use crate::{
-    sprite_animation_keys::AnimationActions, AnimationMap, CurrentAnimation, Floor, Player,
-    Velocity, collision::Collider,
+    collision::Collider, sprite_animation_keys::AnimationActions, AnimationMap, CurrentAnimation,
+    Floor, Player, Velocity,
 };
+
+pub fn update_player_vertical(
+    mut player_query: Query<(
+        &mut Player,
+        &mut Velocity,
+        &mut Transform
+    )>
+) {
+    let (_, mut velocity, mut transform) = player_query.get_single_mut().unwrap();
+    if velocity.value.y != 0. {
+        transform.translation.y += velocity.value.y;
+        velocity.value.y -= 1.;
+    }
+}
 
 fn update_animation(
     current_animation: &mut CurrentAnimation,
@@ -35,7 +49,14 @@ fn is_moving_right(velocity: Vec3) -> bool {
 fn is_moving_left(velocity: Vec3) -> bool {
     velocity.x < 0.
 }
-
+// left and right movement 
+// query: Query<&World, &Transform, &Velocity>
+/*
+ * wold should have floor/map children that will move when you update the 
+ * worlds transform.x
+ *
+ * the player will not be part of the world.
+ */
 pub fn update_floor(
     window: Query<&Window>,
     // time: Res<Time>,
@@ -48,7 +69,6 @@ pub fn update_floor(
     let half_width = window.get_single().unwrap().width() / 2.;
 
     for (_, mut transform) in &mut query {
-        
         if is_moving_left(velocity.value) {
             if collider.is_colliding.left {
                 return;
@@ -60,7 +80,7 @@ pub fn update_floor(
                 return;
             }
         }
-        
+
         /* move tile to front or back*/
         if is_moving_left(velocity.value) && (transform.translation.x - 150.) >= half_width {
             transform.translation.x = (300. * -2.) + 150.;
@@ -93,9 +113,10 @@ pub fn controlls(
         &AnimationMap,
         &mut TextureAtlasSprite,
         &mut Velocity,
+        &mut Collider
     )>,
 ) {
-    for (mut player, mut current_animation, map, mut sprite, mut vel) in &mut query {
+    for (_, mut current_animation, map, mut sprite, mut vel, collider) in &mut query {
         vel.prev.x = vel.value.x;
 
         if keys.just_pressed(KeyCode::A) {
@@ -108,14 +129,9 @@ pub fn controlls(
             sprite.flip_x = false;
         }
 
-        if player.is_airborne {
-            continue;
-        }
-
-        if keys.just_pressed(KeyCode::Return) {
-            player.is_airborne = true;
+        if keys.just_pressed(KeyCode::Return) && collider.is_colliding.bottom {
+            vel.value.y = 25.;
             update_animation(&mut current_animation, map, AnimationActions::Jump);
-            continue;
         }
 
         if mouse.just_pressed(MouseButton::Left) {

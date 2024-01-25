@@ -46,7 +46,7 @@ impl Collider {
     }
 }
 
-const BUFFER: f32 = 20.27;
+const BUFFER: f32 = 10.;
 
 pub fn floor_collision(
     mut player: Query<(&Player, &mut Collider, &Transform, &Children)>,
@@ -103,18 +103,21 @@ pub fn floor_collision(
             let Some(f_right) = f_boundry_map.get(&WallType::Right) else {
                 continue;
             };
-
+            
+            // colliding bottom 
             if p_right.translation().x > f_left.translation().x
                 && p_left.translation().x < f_right.translation().x
                 && !player_collider.is_colliding.bottom
             {
                 if (p_bottom.translation().y - BUFFER) <= f_top.translation().y {
+                    
                     player_collider.is_colliding.bottom = true;
                 } else {
                     player_collider.is_colliding.bottom = false;
                 }
             }
 
+            // colliding top
             if p_right.translation().x > f_left.translation().x
                 && p_left.translation().x < f_right.translation().x
                 && !player_collider.is_colliding.top

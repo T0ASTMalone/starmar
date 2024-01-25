@@ -33,9 +33,7 @@ pub struct CurrentAnimation {
 }
 
 #[derive(Component)]
-pub struct Player {
-    is_airborne: bool,
-}
+pub struct Player;
 
 #[derive(Component, Debug)]
 pub struct Velocity {
@@ -54,7 +52,7 @@ pub struct Floor;
 
 #[derive(Resource)]
 pub struct World {
-    pos: Vec2,
+   pub pos: Vec2,
 }
 
 fn _animation_test(
@@ -66,7 +64,7 @@ fn _animation_test(
     )>,
 ) {
     if keys.just_pressed(KeyCode::A) {
-        for (mut current_animation, map, _) in &mut query {
+        for (_, _, _) in &mut query {
             /*
             current_animation.current_animation =
                 if current_animation.current_animation >= map.0.len() - 1 {
@@ -116,7 +114,7 @@ fn animate_cat(
         &mut Player,
     )>,
 ) {
-    for (mut timer, mut sprite, mut animation, map, mut player) in &mut query {
+    for (mut timer, mut sprite, mut animation, map, _) in &mut query {
         timer.tick(time.delta());
         if timer.just_finished() {
             animation.current_animation_idx =
@@ -124,12 +122,6 @@ fn animate_cat(
                     if animation.is_loop {
                         0
                     } else {
-                        // jump animation is over. player is no longer airborne
-                        if animation.current_animation == AnimationActions::Jump {
-                            println!("Player landed");
-                            player.is_airborne = false;
-                        }
-
                         if !just_pressed_wasd(&keys)
                             && animation.current_animation != AnimationActions::IdleStand
                             && animation.current_animation != AnimationActions::Idle
@@ -194,7 +186,7 @@ fn setup(
             animation_indeces: animation_info.indices,
             is_loop: animation_info.is_loop,
         },
-        Player { is_airborne: false },
+        Player,
         Velocity {
             value: Vec3::splat(0.),
             prev: Vec3::splat(0.),
@@ -288,12 +280,13 @@ fn main() {
         })
         .add_systems(Startup, (camera_setup, setup_map, setup, setup_obstacle))
         .add_systems(PostStartup, draw_bounding_boxes)
+        .add_systems(PreUpdate, collision::floor_collision)
         .add_systems(
             Update,
             (
-                collision::floor_collision,
                 controlls::update_floor,
                 controlls::controlls,
+                controlls::update_player_vertical,
                 animate_cat,
                 gravity::gravity_system,
                 bevy::window::close_on_esc,
